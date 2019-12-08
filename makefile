@@ -4,6 +4,7 @@ CFLAGS=-Wall -Wextra -Wpedantic -ansi -g
 LIB=-lm
 
 src=$(shell find src/ -type f -name '*.c')
+src+=tests/test.c
 obj=$(src:.c=.o)
 
 test: $(obj)

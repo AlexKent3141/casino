@@ -113,7 +113,7 @@ struct Node* Expand(struct CAS_State* cas,
     domain->GetStateActions(position, actionList);
     if (actionList->numActions > 0)
     {
-        n->children = GetNodeList(cas);
+        n->children = GetNodeList(cas->mem, cas->maxActions);
         if (n->children == NULL)
             return NULL;
 
@@ -211,8 +211,8 @@ enum CAS_SearchResult CAS_Search(void* state,
         return INSUFFICIENT_MEMORY;
 
     /* Initialise the root node. */
-    n = MakeRoot(cas, player);
-    if (n == NULL)
+    cas->root = MakeRoot(cas->mem, player);
+    if (cas->root == NULL)
         return INSUFFICIENT_MEMORY;
 
     /* Seed the PRNG. */

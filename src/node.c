@@ -2,11 +2,11 @@
 #include "memory.h"
 #include "assert.h"
 
-struct Node* MakeRoot(struct CAS_State* cas, enum CAS_Player player)
+struct Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
 {
     struct Node* root;
 
-    root = (struct Node*)GetMemory(cas->mem, sizeof(struct Node));
+    root = (struct Node*)GetMemory(mem, sizeof(struct Node));
     root->parent = NULL;
     root->player = player;
     root->action = BAD_ACTION;
@@ -16,21 +16,18 @@ struct Node* MakeRoot(struct CAS_State* cas, enum CAS_Player player)
     root->draws = 0;
     root->playouts = 0;
 
-    cas->root = root;
-
     return root;
 }
 
-struct NodeList* GetNodeList(struct CAS_State* cas)
+struct NodeList* GetNodeList(struct MemoryState* mem, size_t maxActions)
 {
     struct NodeList* list;
 
-    list = (struct NodeList*)GetMemory(cas->mem, sizeof(struct NodeList));
+    list = (struct NodeList*)GetMemory(mem, sizeof(struct NodeList));
     if (list == NULL)
         return NULL;
 
-    list->nodes =
-        (struct Node*)GetMemory(cas->mem, cas->maxActions*sizeof(struct Node));
+    list->nodes = (struct Node*)GetMemory(mem, maxActions*sizeof(struct Node));
     if (list->nodes == NULL)
         return NULL;
 
