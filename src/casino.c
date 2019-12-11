@@ -5,9 +5,7 @@
 #include "node.h"
 #include "stdlib.h"
 #include "stdint.h"
-#include "stdio.h"
 #include "time.h"
-#include "assert.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 {
@@ -56,7 +54,7 @@ double ScoreUCB(struct Node* n)
  */
 struct Node* SelectChild(struct Node* n)
 {
-    struct Node* selected, *current;
+    struct Node* selected = NULL, *current;
     double score, bestScore;
     size_t i;
 
@@ -157,10 +155,10 @@ void Backprop(struct Node* n, enum CAS_Player winner)
     do
     {
         n->playouts++;
-        if (n->player == winner)
-            n->wins++;
-        else if (winner == NONE)
+        if (winner == NONE)
             n->draws++;
+        else if (n->player != winner)
+            n->wins++;
 
         n = n->parent;
 
@@ -171,7 +169,7 @@ void Backprop(struct Node* n, enum CAS_Player winner)
 void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
 {
     struct CAS_State* cas;
-    struct Node* bestNode, *currentNode, *root;
+    struct Node* bestNode = NULL, *currentNode, *root;
     int mostPlayouts = 0;
     size_t i;
 
@@ -192,10 +190,15 @@ void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
     stats->playouts = mostPlayouts;
 }
 
+double TimeSinceStart(clock_t start)
+{
+    return (double)(clock() - start) / CLOCKS_PER_SEC;
+}
+
 enum CAS_SearchResult CAS_Search(void* state,   
                                  CAS_DomainState initialPosition,
                                  enum CAS_Player player,
-                                 int secs)
+                                 int ms)
 {
     struct CAS_State* cas;
     struct CAS_Domain* domain;
@@ -203,14 +206,17 @@ enum CAS_SearchResult CAS_Search(void* state,
     CAS_DomainState pos;
     enum CAS_Player winner;
     struct Node* n;
-    time_t startTime;
+    clock_t startTime;
     uint64_t prngState[2];
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
         return INSUFFICIENT_MEMORY;
 
+    ResetTree(cas->mem);
+
     /* Initialise the root node. */
+    /* This also flags to the memory state where to start in the buffer. */
     cas->root = MakeRoot(cas->mem, player);
     if (cas->root == NULL)
         return INSUFFICIENT_MEMORY;
@@ -222,7 +228,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     /* Perform the MCTS procedure while resources remain. */
     domain = cas->domain;
     actionList = GetActionList(cas);
-    startTime = time(NULL);
+    startTime = clock();
     pos = GetMemory(cas->mem, domain->domainStateSize);
     if (pos == NULL)
         return INSUFFICIENT_MEMORY;
@@ -237,7 +243,7 @@ enum CAS_SearchResult CAS_Search(void* state,
         winner = Simulate(domain, pos, actionList, prngState);
         Backprop(n, winner);
 
-    } while (difftime(time(NULL), startTime) < secs);
+    } while (TimeSinceStart(startTime) < ms/1000.0);
 
     /* Now examine the tree to find the best move. */
     return SUCCESS;

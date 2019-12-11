@@ -1,7 +1,6 @@
 #include "memory.h"
-#include "string.h"
 #include "assert.h"
-#include "stdio.h"
+#include "string.h"
 
 struct MemoryState* MemoryInit(size_t bufSize, char* buf)
 {
@@ -14,8 +13,17 @@ struct MemoryState* MemoryInit(size_t bufSize, char* buf)
     mem->buf = buf;
     mem->bufSize = bufSize;
     mem->bufNext = sizeof(struct MemoryState);
+    mem->bufRoot = 0;
 
     return mem;
+}
+
+void ResetTree(struct MemoryState* st)
+{
+    if (st->bufRoot != 0)
+    {
+        st->bufNext = st->bufRoot;
+    }
 }
 
 bool IsMemoryAvailable(struct MemoryState* st, size_t numBytes)

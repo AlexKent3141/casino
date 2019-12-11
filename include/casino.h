@@ -81,7 +81,7 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf);
 enum CAS_SearchResult CAS_Search(void* cas,
                                  CAS_DomainState initialPosition,
                                  enum CAS_Player player,
-                                 int secs);
+                                 int ms);
 
 /* Get statistics for the best action in the most recent search. */
 void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);

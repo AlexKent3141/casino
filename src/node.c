@@ -6,6 +6,8 @@ struct Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
 {
     struct Node* root;
 
+    mem->bufRoot = mem->bufNext;
+
     root = (struct Node*)GetMemory(mem, sizeof(struct Node));
     root->parent = NULL;
     root->player = player;

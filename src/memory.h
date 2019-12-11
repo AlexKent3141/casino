@@ -9,9 +9,15 @@ struct MemoryState
     char* buf;      /* The block of memory. */
     size_t bufSize; /* The size of the buffer. */
     size_t bufNext; /* The next available (unused) position in the buffer. */
+    size_t bufRoot; /* The position of the latest root node. */
 };
 
 struct MemoryState* MemoryInit(size_t bufSize, char* buf);
+
+/*
+ * This method is used to reset the tree between searches.
+ */
+void ResetTree(struct MemoryState* st);
 
 bool IsMemoryAvailable(struct MemoryState* st, size_t numBytes);
 
