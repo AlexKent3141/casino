@@ -8,6 +8,12 @@
 #include "stdint.h"
 #include "stdlib.h"
 
+#define EXPORT __attribute__ ((visibility("default")))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint64_t CAS_Action;
 typedef void* CAS_DomainState;
 
@@ -75,18 +81,22 @@ struct CAS_Domain
  * If Casino runs out of memory while searching then it will return the best
  * move so far.
  */
-void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf);
+EXPORT void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf);
 
 /* Search the current domain state. */
-enum CAS_SearchResult CAS_Search(void* cas,
-                                 CAS_DomainState initialPosition,
-                                 enum CAS_Player player,
-                                 int ms);
+EXPORT enum CAS_SearchResult CAS_Search(void* cas,
+                                        CAS_DomainState initialPosition,
+                                        enum CAS_Player player,
+                                        int ms);
 
 /* Get statistics for the best action in the most recent search. */
-void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
+EXPORT void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
 
-/* Methods to creating and interacting with action lists. */
-void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
+/* Add an action to an action list. */
+EXPORT void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CASINO_INCLUDED_H__ */
