@@ -147,7 +147,7 @@ CAS_Action GetUserAction()
     return 3*r+c;
 }
 
-void PlayGame(void* casState)
+void PlayGame(void* casState, struct CAS_SearchConfig* config)
 {
     struct TTTState* tttState;
     struct CAS_ActionStats* stats;
@@ -161,7 +161,7 @@ void PlayGame(void* casState)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, tttState, P1, 500);
+        res = CAS_Search(casState, config, tttState, P1, 500);
         if (res != SUCCESS)
         {
             printf("Search failed: %d\n", res);
@@ -200,16 +200,20 @@ int main()
     const int MaxActionsPerTurn = 9;
     const size_t MaxBytes = 50*1024*1024;
     struct CAS_Domain domain;
+    struct CAS_SearchConfig config;
     void* casState;
     char* buf;
 
-    /* Initialise TTT state. */
+    /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
     domain.domainStateSize = sizeof(struct TTTState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
     domain.DoAction = &DoAction;
     domain.GetScore = &GetScore;
+
+    /* Initialise the search config. */
+    config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);
@@ -221,7 +225,7 @@ int main()
         return -1;
     }
 
-    PlayGame(casState);
+    PlayGame(casState, &config);
 
     free(buf);
 

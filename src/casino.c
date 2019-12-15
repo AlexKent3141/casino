@@ -1,6 +1,5 @@
 #include "../include/casino.h"
 #include "casino_state.h"
-#include "math.h"
 #include "memory.h"
 #include "node.h"
 #include "stdlib.h"
@@ -40,56 +39,20 @@ uint64_t xorshift128plus(uint64_t s[2])
     return s[1] + y;
 }
 
-double ScoreUCB(struct Node* n)
-{
-    const double C = sqrt(2);
-    double exploit = (n->wins + 0.5*n->draws)/n->playouts;
-    double expand = C*sqrt(log(n->parent->playouts)/n->playouts);
-    return exploit + expand;
-}
-
-/*
- * Select the best child using the UCB criterion.
- * If a child hasn't been visited yet then it should be selected next.
- */
-struct Node* SelectChild(struct Node* n)
-{
-    struct Node* selected = NULL, *current;
-    double score, bestScore;
-    size_t i;
-
-    bestScore = 0;
-    for (i = 0; i < n->children->numNodes; i++)
-    {
-        current = &n->children->nodes[i];
-
-        if (current->playouts == 0)
-            return current;
-
-        score = ScoreUCB(current);
-        if (score >= bestScore)
-        {
-            selected = current;
-            bestScore = score;
-        }
-    }
-
-    return selected;
-}
-
 /* Keep selecting child nodes until a leaf node (or a terminal node) is reached. */
-struct Node* Select(struct CAS_Domain* domain,
-                    struct Node* n,
-                    CAS_DomainState position)
+struct CAS_Node* Select(struct CAS_SearchConfig* config,
+                        struct CAS_Domain* domain,
+                        struct CAS_Node* n,
+                        CAS_DomainState position)
 {
-    struct Node* selected;
+    struct CAS_Node* selected;
 
     selected = n;
     while (selected->expanded
         && selected->children != NULL
         && selected->children->numNodes > 0)
     {
-        selected = SelectChild(selected);
+        selected = config->SelectionPolicy(selected);
         domain->DoAction(position, selected->action);
     }
 
@@ -97,13 +60,13 @@ struct Node* Select(struct CAS_Domain* domain,
 }
 
 /* Add nodes for each of the actions available from n and pick the first. */
-struct Node* Expand(struct CAS_State* cas,
-                    struct CAS_Domain* domain,
-                    struct Node* n,
-                    CAS_DomainState position,
-                    struct CAS_ActionList* actionList)
+struct CAS_Node* Expand(struct CAS_State* cas,
+                        struct CAS_Domain* domain,
+                        struct CAS_Node* n,
+                        CAS_DomainState position,
+                        struct CAS_ActionList* actionList)
 {
-    struct Node* expanded;
+    struct CAS_Node* expanded;
     size_t i;
 
     expanded = n;
@@ -150,7 +113,7 @@ enum CAS_Player Simulate(struct CAS_Domain* domain,
     return domain->GetScore(position);
 }
 
-void Backprop(struct Node* n, enum CAS_Player winner)
+void Backprop(struct CAS_Node* n, enum CAS_Player winner)
 {
     do
     {
@@ -169,7 +132,7 @@ void Backprop(struct Node* n, enum CAS_Player winner)
 void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
 {
     struct CAS_State* cas;
-    struct Node* bestNode = NULL, *currentNode, *root;
+    struct CAS_Node* bestNode = NULL, *currentNode, *root;
     int mostPlayouts = 0;
     size_t i;
 
@@ -186,7 +149,7 @@ void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
     }
 
     stats->action = bestNode->action;
-    stats->winRate = (bestNode->wins + 0.5*bestNode->draws)/mostPlayouts;
+    stats->winRate = CAS_WinRate(bestNode);
     stats->playouts = mostPlayouts;
 }
 
@@ -196,6 +159,7 @@ double TimeSinceStart(clock_t start)
 }
 
 enum CAS_SearchResult CAS_Search(void* state,   
+                                 struct CAS_SearchConfig* config,
                                  CAS_DomainState initialPosition,
                                  enum CAS_Player player,
                                  int ms)
@@ -205,7 +169,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     struct CAS_ActionList* actionList;
     CAS_DomainState pos;
     enum CAS_Player winner;
-    struct Node* n;
+    struct CAS_Node* n;
     clock_t startTime;
     uint64_t prngState[2];
 
@@ -237,7 +201,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     {
         domain->CopyState(initialPosition, pos);
 
-        n = Select(domain, cas->root, pos);
+        n = Select(config, domain, cas->root, pos);
         n = Expand(cas, domain, n, pos, actionList);
         if (n == NULL) break;
         winner = Simulate(domain, pos, actionList, prngState);

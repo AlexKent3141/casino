@@ -5,6 +5,7 @@
  * This header file defines the API for the Casino library.
  */
 
+#include "stdbool.h"
 #include "stdint.h"
 #include "stdlib.h"
 
@@ -45,6 +46,24 @@ struct CAS_ActionStats
     int playouts;
 };
 
+struct CAS_NodeList
+{
+    struct CAS_Node* nodes;
+    size_t numNodes;
+};
+
+struct CAS_Node
+{
+    struct CAS_Node* parent;       /* The parent of this node. */
+    enum CAS_Player player;        /* The player to move. */
+    CAS_Action action;             /* The previous action. */
+    bool expanded;                 /* Whether this node has been expanded. */
+    struct CAS_NodeList* children; /* The child nodes of this node. */
+    int wins;                      /* The number of wins during playouts. */
+    int draws;                     /* The number of draws during playouts. */
+    int playouts;                  /* The total number of playouts. */
+};
+
 /*
  * This struct contains the functions which define the problem domain.
  * All of these functions must be defined by the application.
@@ -74,6 +93,15 @@ struct CAS_Domain
     enum CAS_Player (*GetScore)(CAS_DomainState);
 };
 
+struct CAS_SearchConfig
+{
+    /*
+     * The selection policy to use.
+     * This is used to select which node to expand next in the tree.
+     */
+    struct CAS_Node* (*SelectionPolicy)(struct CAS_Node*);
+};
+
 /*
  * Initialise the Casino internals for the specified domain.
  * The application must provide *all* of the memory required by Casino - the 
@@ -85,6 +113,7 @@ EXPORT void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf);
 
 /* Search the current domain state. */
 EXPORT enum CAS_SearchResult CAS_Search(void* cas,
+                                        struct CAS_SearchConfig* config,
                                         CAS_DomainState initialPosition,
                                         enum CAS_Player player,
                                         int ms);
@@ -94,6 +123,22 @@ EXPORT void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
 
 /* Add an action to an action list. */
 EXPORT void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
+
+/* Built-in selection methods. */
+EXPORT double CAS_WinRate(struct CAS_Node* node);
+EXPORT double CAS_UCBExploration(struct CAS_Node* node, double explorationFactor);
+
+/*
+ * Select the node with the highest score according to the predicate.
+ */
+EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* node,
+                                          double (*SelectScore)(struct CAS_Node*));
+
+/*
+ * The default selection policy for nodes during selection.
+ * This applies the UCB formula with exploration constant c = sqrt(2).
+ */
+EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(struct CAS_Node* node);
 
 #ifdef __cplusplus
 }

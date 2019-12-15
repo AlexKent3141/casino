@@ -7,7 +7,7 @@
 struct CAS_State
 {
     struct CAS_Domain* domain;
-    struct Node* root;
+    struct CAS_Node* root;
     int maxActions;
     struct MemoryState* mem;
 };

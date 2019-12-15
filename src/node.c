@@ -2,13 +2,13 @@
 #include "memory.h"
 #include "assert.h"
 
-struct Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
+struct CAS_Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
 {
-    struct Node* root;
+    struct CAS_Node* root;
 
     mem->bufRoot = mem->bufNext;
 
-    root = (struct Node*)GetMemory(mem, sizeof(struct Node));
+    root = (struct CAS_Node*)GetMemory(mem, sizeof(struct CAS_Node));
     root->parent = NULL;
     root->player = player;
     root->action = BAD_ACTION;
@@ -21,15 +21,16 @@ struct Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
     return root;
 }
 
-struct NodeList* GetNodeList(struct MemoryState* mem, size_t maxActions)
+struct CAS_NodeList* GetNodeList(struct MemoryState* mem, size_t maxActions)
 {
-    struct NodeList* list;
+    struct CAS_NodeList* list;
 
-    list = (struct NodeList*)GetMemory(mem, sizeof(struct NodeList));
+    list = (struct CAS_NodeList*)GetMemory(mem, sizeof(struct CAS_NodeList));
     if (list == NULL)
         return NULL;
 
-    list->nodes = (struct Node*)GetMemory(mem, maxActions*sizeof(struct Node));
+    list->nodes =
+        (struct CAS_Node*)GetMemory(mem, maxActions*sizeof(struct CAS_Node));
     if (list->nodes == NULL)
         return NULL;
 
@@ -39,9 +40,9 @@ struct NodeList* GetNodeList(struct MemoryState* mem, size_t maxActions)
 }
 
 /* This method creates and appends a new node. */
-void AddNode(struct NodeList* list, struct Node* parent, CAS_Action action)
+void AddNode(struct CAS_NodeList* list, struct CAS_Node* parent, CAS_Action action)
 {
-    struct Node* n;
+    struct CAS_Node* n;
     
     assert(parent != NULL);
     assert(parent->player != NONE);
