@@ -10,6 +10,7 @@ struct CAS_State
     struct CAS_Node* root;
     int maxActions;
     struct MemoryState* mem;
+    uint64_t prngState[2];
 };
 
 struct CAS_ActionList* GetActionList(void* st);

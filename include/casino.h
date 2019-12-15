@@ -140,6 +140,12 @@ EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* node,
  */
 EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(struct CAS_Node* node);
 
+/*
+ * Get a pseudo-random number on the interval [0, bound).
+ * This uses an internal xorshift generator.
+ */
+EXPORT int CAS_Random(void* cas, int bound);
+
 #ifdef __cplusplus
 }
 #endif

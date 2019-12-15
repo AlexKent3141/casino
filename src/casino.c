@@ -26,17 +26,11 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
     cas->root = NULL;
     cas->mem = mem;
 
-    return (void*)cas;
-}
+    /* Seed the PRNG. */
+    cas->prngState[0] = 0xdeadbeefcafebabe;
+    cas->prngState[1] = 0x8badf00dbaada555;
 
-uint64_t xorshift128plus(uint64_t s[2])
-{
-    uint64_t x = s[0];
-    uint64_t y = s[1];
-    s[0] = y;
-    x ^= x << 23;
-    s[1] = x ^ y ^ (x >> 17) ^ (y >> 26);
-    return s[1] + y;
+    return (void*)cas;
 }
 
 /* Keep selecting child nodes until a leaf node (or a terminal node) is reached. */
@@ -91,10 +85,10 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 }
 
 /* Play out a random game from the point and score the terminal state. */
-enum CAS_Player Simulate(struct CAS_Domain* domain,
+enum CAS_Player Simulate(struct CAS_State* cas,
+                         struct CAS_Domain* domain,
                          CAS_DomainState position,
-                         struct CAS_ActionList* actionList,
-                         uint64_t* prngState)
+                         struct CAS_ActionList* actionList)
 {
     int i;
 
@@ -103,7 +97,7 @@ enum CAS_Player Simulate(struct CAS_Domain* domain,
     while (actionList->numActions > 0)
     {
         /* Currently just select moves uniformly. */
-        i = xorshift128plus(prngState) % actionList->numActions;
+        i = CAS_Random(cas, actionList->numActions);
         domain->DoAction(position, actionList->actions[i]);
 
         actionList->numActions = 0;
@@ -171,7 +165,6 @@ enum CAS_SearchResult CAS_Search(void* state,
     enum CAS_Player winner;
     struct CAS_Node* n;
     clock_t startTime;
-    uint64_t prngState[2];
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
@@ -184,10 +177,6 @@ enum CAS_SearchResult CAS_Search(void* state,
     cas->root = MakeRoot(cas->mem, player);
     if (cas->root == NULL)
         return INSUFFICIENT_MEMORY;
-
-    /* Seed the PRNG. */
-    prngState[0] = 0xdeadbeefcafebabe;
-    prngState[1] = 0x8badf00dbaada555;
 
     /* Perform the MCTS procedure while resources remain. */
     domain = cas->domain;
@@ -204,7 +193,7 @@ enum CAS_SearchResult CAS_Search(void* state,
         n = Select(config, domain, cas->root, pos);
         n = Expand(cas, domain, n, pos, actionList);
         if (n == NULL) break;
-        winner = Simulate(domain, pos, actionList, prngState);
+        winner = Simulate(cas, domain, pos, actionList);
         Backprop(n, winner);
 
     } while (TimeSinceStart(startTime) < ms/1000.0);
