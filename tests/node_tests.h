@@ -28,10 +28,10 @@ struct MemoryState* GetMemoryState(size_t testBytes)
 TEST MakeRoot_Test()
 {
     struct MemoryState* mem;
-    struct Node* root;
+    struct CAS_Node* root;
 
     /* Create a root Node. */
-    mem = GetMemoryState(sizeof(struct Node));
+    mem = GetMemoryState(sizeof(struct CAS_Node));
     root = MakeRoot(mem, P1);
     ASSERT(root != NULL);
 
@@ -45,10 +45,10 @@ TEST GetNodeList_Test()
 {
     const int MaxActions = 10;
     struct MemoryState* mem;
-    struct NodeList* nodeList;
+    struct CAS_NodeList* nodeList;
 
     /* Create a MemoryState and a NodeList. */
-    mem = GetMemoryState(sizeof(struct NodeList) + MaxActions*sizeof(struct Node));
+    mem = GetMemoryState(sizeof(struct CAS_NodeList) + MaxActions*sizeof(struct CAS_Node));
     nodeList = GetNodeList(mem, MaxActions);
     ASSERT(nodeList != NULL);
 
@@ -62,13 +62,13 @@ TEST AddNode_Test()
 {
     const size_t MaxActions = 10;
     struct MemoryState* mem;
-    struct NodeList* nodeList;
-    struct Node* root;
+    struct CAS_NodeList* nodeList;
+    struct CAS_Node* root;
     size_t action;
 
     /* Create a MemoryState and a root Node. */
-    mem = GetMemoryState(sizeof(struct NodeList)
-        + (MaxActions+1)*sizeof(struct Node));
+    mem = GetMemoryState(sizeof(struct CAS_NodeList)
+        + (MaxActions+1)*sizeof(struct CAS_Node));
     root = MakeRoot(mem, P1);
     ASSERT(root != NULL);
 
