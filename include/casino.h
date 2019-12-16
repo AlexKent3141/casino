@@ -99,7 +99,17 @@ struct CAS_SearchConfig
      * The selection policy to use.
      * This is used to select which node to expand next in the tree.
      */
-    struct CAS_Node* (*SelectionPolicy)(struct CAS_Node*);
+    struct CAS_Node* (*SelectionPolicy)(void* cas,
+                                        struct CAS_Node*);
+
+    /*
+     * The playout policy to use.
+     * This is used during the simulation stage.
+     */
+    CAS_Action (*PlayoutPolicy)(void* cas,
+                                struct CAS_Domain* domainState,
+                                CAS_DomainState position,
+                                struct CAS_ActionList* list);
 };
 
 /*
@@ -124,12 +134,13 @@ EXPORT void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
 /* Add an action to an action list. */
 EXPORT void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
 
-/* Built-in selection methods. */
+/* Built-in selection policy methods. */
+
 EXPORT double CAS_WinRate(struct CAS_Node* node);
 EXPORT double CAS_UCBExploration(struct CAS_Node* node, double explorationFactor);
 
 /*
- * Select the node with the highest score according to the predicate.
+ * Select the node with the highest score according to the scoring function.
  */
 EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* node,
                                           double (*SelectScore)(struct CAS_Node*));
@@ -138,7 +149,19 @@ EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* node,
  * The default selection policy for nodes during selection.
  * This applies the UCB formula with exploration constant c = sqrt(2).
  */
-EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(struct CAS_Node* node);
+EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
+                                                   struct CAS_Node* node);
+
+/* Built-in playout policy methods. */
+
+/*
+ *  The default playout policy for action selection during playouts.
+ * This applies uniform selection over the available actions.
+ */
+EXPORT CAS_Action CAS_DefaultPlayoutPolicy(void* cas,
+                                           struct CAS_Domain* domainState,
+                                           CAS_DomainState position,
+                                           struct CAS_ActionList* list);
 
 /*
  * Get a pseudo-random number on the interval [0, bound).

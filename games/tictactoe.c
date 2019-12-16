@@ -213,7 +213,9 @@ int main()
     domain.GetScore = &GetScore;
 
     /* Initialise the search config. */
+    /* In this case we just use the defaults. */
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
+    config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);

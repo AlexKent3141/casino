@@ -34,7 +34,8 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 }
 
 /* Keep selecting child nodes until a leaf node (or a terminal node) is reached. */
-struct CAS_Node* Select(struct CAS_SearchConfig* config,
+struct CAS_Node* Select(void* cas,
+                        struct CAS_SearchConfig* config,
                         struct CAS_Domain* domain,
                         struct CAS_Node* n,
                         CAS_DomainState position)
@@ -46,7 +47,7 @@ struct CAS_Node* Select(struct CAS_SearchConfig* config,
         && selected->children != NULL
         && selected->children->numNodes > 0)
     {
-        selected = config->SelectionPolicy(selected);
+        selected = config->SelectionPolicy(cas, selected);
         domain->DoAction(position, selected->action);
     }
 
@@ -86,22 +87,22 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 
 /* Play out a random game from the point and score the terminal state. */
 enum CAS_Player Simulate(struct CAS_State* cas,
+                         struct CAS_SearchConfig* config,
                          struct CAS_Domain* domain,
                          CAS_DomainState position,
                          struct CAS_ActionList* actionList)
 {
-    int i;
+    CAS_Action action;
 
     actionList->numActions = 0;
-    domain->GetStateActions(position, actionList);
-    while (actionList->numActions > 0)
+    action = config->PlayoutPolicy(cas, domain, position, actionList);
+    while (action != BAD_ACTION)
     {
-        /* Currently just select moves uniformly. */
-        i = CAS_Random(cas, actionList->numActions);
-        domain->DoAction(position, actionList->actions[i]);
+        domain->DoAction(position, action);
 
+        /* Select which move to make next using the playout policy. */
         actionList->numActions = 0;
-        domain->GetStateActions(position, actionList);
+        action = config->PlayoutPolicy(cas, domain, position, actionList);
     }
 
     return domain->GetScore(position);
@@ -190,10 +191,10 @@ enum CAS_SearchResult CAS_Search(void* state,
     {
         domain->CopyState(initialPosition, pos);
 
-        n = Select(config, domain, cas->root, pos);
+        n = Select(cas, config, domain, cas->root, pos);
         n = Expand(cas, domain, n, pos, actionList);
         if (n == NULL) break;
-        winner = Simulate(cas, domain, pos, actionList);
+        winner = Simulate(cas, config, domain, pos, actionList);
         Backprop(n, winner);
 
     } while (TimeSinceStart(startTime) < ms/1000.0);

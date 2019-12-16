@@ -43,7 +43,9 @@ double DefaultNodeScore(struct CAS_Node* n)
     return CAS_WinRate(n) + CAS_UCBExploration(n, ExplorationConstant);
 }
 
-struct CAS_Node* CAS_DefaultSelectionPolicy(struct CAS_Node* n)
+struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
+                                            struct CAS_Node* n)
 {
+    (void)cas;
     return CAS_SelectByScore(n, &DefaultNodeScore);
 }
