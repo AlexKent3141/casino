@@ -9,10 +9,10 @@ My MCTS implementation in OnePunchGo is very much Go-specific. This library is a
 ## Features
 * Fast single-threaded MCTS implementation with UCB-based exploration/exploitation.
 * Ability to apply MCTS to a wide range of problems.
+* Customisable selection and playout policies.
 
 ## TODO
 Add more MCTS extensions:
-* Customisable move selection criteria for the selection and expansion phases of the algorithm.
 * RAVE option.
 * Different number of players (single player or even > 2 players).
 * Support for imperfect information games.
@@ -40,3 +40,6 @@ The tests can be compiled by running `make test` in the root directory.
 
 ### Tic-tac-toe example
 The tic-tac-toe example can be compiled by running `make tictactoe` in the root directory. Running the tictactoe binary will allow you to play against the AI in the command line.
+
+### Breakthrough example
+The Breakthrough example can be compiled by running `make break` in the root directory. Running the break binary will allow you to play against the AI in the command line.
