@@ -47,7 +47,7 @@ struct CAS_Node* Select(void* cas,
         && selected->children != NULL
         && selected->children->numNodes > 0)
     {
-        selected = config->SelectionPolicy(cas, selected);
+        selected = config->SelectionPolicy(cas, position, selected);
         domain->DoAction(position, selected->action);
     }
 

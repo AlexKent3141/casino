@@ -100,7 +100,8 @@ struct CAS_SearchConfig
      * This is used to select which node to expand next in the tree.
      */
     struct CAS_Node* (*SelectionPolicy)(void* cas,
-                                        struct CAS_Node*);
+                                        CAS_DomainState position,
+                                        struct CAS_Node* parent);
 
     /*
      * The playout policy to use.
@@ -142,14 +143,17 @@ EXPORT double CAS_UCBExploration(struct CAS_Node* node, double explorationFactor
 /*
  * Select the node with the highest score according to the scoring function.
  */
-EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* node,
-                                          double (*SelectScore)(struct CAS_Node*));
+EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* parent,
+                                          CAS_DomainState position,
+                                          double (*SelectScore)(CAS_DomainState,
+                                                                struct CAS_Node*));
 
 /*
  * The default selection policy for nodes during selection.
  * This applies the UCB formula with exploration constant c = sqrt(2).
  */
 EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
+                                                   CAS_DomainState position,
                                                    struct CAS_Node* node);
 
 /* Built-in playout policy methods. */

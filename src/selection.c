@@ -11,22 +11,24 @@ double CAS_UCBExploration(struct CAS_Node* n, double explorationFactor)
 	return explorationFactor * sqrt(log(n->parent->playouts) / n->playouts);
 }
 
-struct CAS_Node* CAS_SelectByScore(struct CAS_Node* n,
-                                   double (*SelectScore)(struct CAS_Node*))
+struct CAS_Node* CAS_SelectByScore(struct CAS_Node* parent,
+                                   CAS_DomainState position,
+                                   double (*SelectScore)(CAS_DomainState,
+                                                         struct CAS_Node*))
 {
     struct CAS_Node* selected = NULL, *current;
     double score, bestScore;
     size_t i;
 
     bestScore = 0;
-    for (i = 0; i < n->children->numNodes; i++)
+    for (i = 0; i < parent->children->numNodes; i++)
     {
-        current = &n->children->nodes[i];
+        current = &parent->children->nodes[i];
 
         if (current->playouts == 0)
             return current;
 
-        score = SelectScore(current);
+        score = SelectScore(position, current);
         if (score >= bestScore)
         {
             selected = current;
@@ -37,15 +39,17 @@ struct CAS_Node* CAS_SelectByScore(struct CAS_Node* n,
     return selected;
 }
 
-double DefaultNodeScore(struct CAS_Node* n)
+double DefaultNodeScore(CAS_DomainState position, struct CAS_Node* n)
 {
     const double ExplorationConstant = sqrt(2);
+    (void)position;
     return CAS_WinRate(n) + CAS_UCBExploration(n, ExplorationConstant);
 }
 
 struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
-                                            struct CAS_Node* n)
+                                            CAS_DomainState position,
+                                            struct CAS_Node* parent)
 {
     (void)cas;
-    return CAS_SelectByScore(n, &DefaultNodeScore);
+    return CAS_SelectByScore(parent, position, &DefaultNodeScore);
 }

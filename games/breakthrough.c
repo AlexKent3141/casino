@@ -3,6 +3,7 @@
 #include "stdint.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "math.h"
 
 /* Test Casino using 8x8 Breakthrough as an example. */
 
@@ -89,24 +90,6 @@ int PopLSB(bb* bits)
     return bit;
 }
 
-void PrintBB(bb board)
-{
-    int r, c;
-    printf("  -----------------\n");
-    for (r = 7; r >= 0; r--)
-    {
-        printf("%d |", r);
-        for (c = 0; c < 8; c++)
-        {
-            if (board & squares[8*r+c])
-                printf("1|");
-            else
-                printf("0|");
-        }
-        printf("\n  -----------------\n");
-    }
-}
-
 /* Methods for the custom MCTS policies used in this application. */
 CAS_Action GetWinningMove(CAS_DomainState st)
 {
@@ -183,7 +166,40 @@ CAS_Action GetRandomCapture(void* casState,
     return cap;
 }
 
-CAS_Action WeightedPlayoutPolicy(void* casState,
+/* This node scoring function introduces bias towards capturing moves. */
+double BiasedNodeScore(CAS_DomainState position, struct CAS_Node* n)
+{
+    const double CaptureWeight = 100;
+    const double ExplorationConstant = sqrt(2);
+
+    struct BreakState* board = (struct BreakState*)position;
+    bb enemy = board->player == P1 ? board->p2Pieces : board->p1Pieces;
+    double score = 0;
+
+    if (enemy & squares[GetEnd(n->action)])
+    {
+        /* Calculate the bias term. */
+        /* This is formulated so that the bias will be gradually discarded as
+           move playouts are performed. In the literature this is called
+           progressive bias. */
+        score += CaptureWeight / n->playouts;
+    }
+
+    /* This is the standard UCB formula. */
+    score += CAS_WinRate(n) + CAS_UCBExploration(n, ExplorationConstant);
+
+    return score;
+}
+
+struct CAS_Node* BiasedSelectionPolicy(void* casState,
+                                       CAS_DomainState position,
+                                       struct CAS_Node* parent)
+{
+    (void)casState;
+    return CAS_SelectByScore(parent, position, &BiasedNodeScore);
+}
+
+CAS_Action BiasedPlayoutPolicy(void* casState,
                                  struct CAS_Domain* domainState,
                                  CAS_DomainState position,
                                  struct CAS_ActionList* list)
@@ -314,6 +330,8 @@ void PrintState(struct BreakState* state)
         for (c = 0; c < 8; c++) PrintLoc(state, 8*(r-1)+c);
         printf("\n  -----------------\n");
     }
+
+    printf("   A B C D E F G H\n");
 }
 
 void PrintAction(CAS_Action action)
@@ -409,8 +427,8 @@ int main()
     domain.GetScore = &GetScore;
 
     /* Initialise the search config. */
-    config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
-    config.PlayoutPolicy = &WeightedPlayoutPolicy;
+    config.SelectionPolicy = &BiasedSelectionPolicy;
+    config.PlayoutPolicy = &BiasedPlayoutPolicy;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);

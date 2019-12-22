@@ -1,0 +1,4 @@
+*.o
+break
+tictactoe
+libcasino*
