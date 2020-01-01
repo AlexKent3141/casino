@@ -164,7 +164,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     struct CAS_ActionList* actionList;
     CAS_DomainState pos;
     enum CAS_Player winner;
-    struct CAS_Node* n;
+    struct CAS_Node* n, *selected;
     clock_t startTime;
 
     cas = (struct CAS_State*)state;
@@ -191,9 +191,14 @@ enum CAS_SearchResult CAS_Search(void* state,
     {
         domain->CopyState(initialPosition, pos);
 
-        n = Select(cas, config, domain, cas->root, pos);
-        n = Expand(cas, domain, n, pos, actionList);
-        if (n == NULL) break;
+        selected = Select(cas, config, domain, cas->root, pos);
+        n = Expand(cas, domain, selected, pos, actionList);
+        if (n == NULL)
+        {
+            /* Out of memory, just keep doing playouts on the current tree. */
+            n = selected;
+        }
+
         winner = Simulate(cas, config, domain, pos, actionList);
         Backprop(n, winner);
 
