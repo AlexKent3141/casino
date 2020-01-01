@@ -169,7 +169,7 @@ CAS_Action GetRandomCapture(void* casState,
 /* This node scoring function introduces bias towards capturing moves. */
 double BiasedNodeScore(CAS_DomainState position, struct CAS_Node* n)
 {
-    const double CaptureWeight = 100;
+    const double CaptureWeight = 1000;
     const double ExplorationConstant = sqrt(2);
 
     struct BreakState* board = (struct BreakState*)position;
@@ -204,12 +204,15 @@ CAS_Action BiasedPlayoutPolicy(void* casState,
                                  CAS_DomainState position,
                                  struct CAS_ActionList* list)
 {
-    /* If a winning move is available then play it. */
-    CAS_Action action = GetWinningMove(position);
-    if (action != BAD_ACTION)
-    {
+    /* Make sure that the game isn't over already. */
+    CAS_Action action = BAD_ACTION;
+    if (CheckForWinner(position) != NONE)
         return action;
-    }
+
+    /* If a winning move is available then play it. */
+    action = GetWinningMove(position);
+    if (action != BAD_ACTION)
+        return action;
 
     /* If there are captures available then play one with high probability. */
     action = GetRandomCapture(casState, position, list);
