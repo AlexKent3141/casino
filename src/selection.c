@@ -17,10 +17,9 @@ struct CAS_Node* CAS_SelectByScore(struct CAS_Node* parent,
                                                          struct CAS_Node*))
 {
     struct CAS_Node* selected = NULL, *current;
-    double score, bestScore;
+    double score, bestScore = 0;
     size_t i;
 
-    bestScore = 0;
     for (i = 0; i < parent->children->numNodes; i++)
     {
         current = &parent->children->nodes[i];

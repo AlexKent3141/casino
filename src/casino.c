@@ -2,8 +2,6 @@
 #include "casino_state.h"
 #include "memory.h"
 #include "node.h"
-#include "stdlib.h"
-#include "stdint.h"
 #include "time.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
@@ -40,9 +38,8 @@ struct CAS_Node* Select(void* cas,
                         struct CAS_Node* n,
                         CAS_DomainState position)
 {
-    struct CAS_Node* selected;
+    struct CAS_Node* selected = n;
 
-    selected = n;
     while (selected->expanded
         && selected->children != NULL
         && selected->children->numNodes > 0)
@@ -61,10 +58,9 @@ struct CAS_Node* Expand(struct CAS_State* cas,
                         CAS_DomainState position,
                         struct CAS_ActionList* actionList)
 {
-    struct CAS_Node* expanded;
+    struct CAS_Node* expanded = n;
     size_t i;
 
-    expanded = n;
     actionList->numActions = 0;
     domain->GetStateActions(position, actionList);
     if (actionList->numActions > 0)
@@ -126,13 +122,11 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
 /* Parse the tree to find the best action. */
 void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
 {
-    struct CAS_State* cas;
-    struct CAS_Node* bestNode = NULL, *currentNode, *root;
+    struct CAS_State* cas = (struct CAS_State*)state;
+    struct CAS_Node* bestNode = NULL, *root = cas->root, *currentNode;
     int mostPlayouts = 0;
     size_t i;
 
-    cas = (struct CAS_State*)state;
-    root = cas->root;
     for (i = 0; i < root->children->numNodes; i++)
     {
         currentNode = &root->children->nodes[i];
