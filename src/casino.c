@@ -119,17 +119,15 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
     } while (n != NULL);
 }
 
-/* Parse the tree to find the best action. */
-void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
+struct CAS_Node* GetChildWithMostPlayouts(struct CAS_Node* parent)
 {
-    struct CAS_State* cas = (struct CAS_State*)state;
-    struct CAS_Node* bestNode = NULL, *root = cas->root, *currentNode;
+    struct CAS_Node* bestNode = NULL, *currentNode;
     int mostPlayouts = 0;
     size_t i;
 
-    for (i = 0; i < root->children->numNodes; i++)
+    for (i = 0; i < parent->children->numNodes; i++)
     {
-        currentNode = &root->children->nodes[i];
+        currentNode = &parent->children->nodes[i];
         if (currentNode->playouts > mostPlayouts)
         {
             mostPlayouts = currentNode->playouts;
@@ -137,9 +135,37 @@ void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
         }
     }
 
-    stats->action = bestNode->action;
-    stats->winRate = CAS_WinRate(bestNode);
-    stats->playouts = mostPlayouts;
+    return bestNode;
+}
+
+/* Parse the tree to find the best action. */
+void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
+{
+    struct CAS_State* cas = (struct CAS_State*)state;
+    struct CAS_Node* bestNode = GetChildWithMostPlayouts(cas->root);
+
+    if (bestNode != NULL)
+    {
+        stats->action = bestNode->action;
+        stats->winRate = CAS_WinRate(bestNode);
+        stats->playouts = bestNode->playouts;;
+    }
+}
+
+/* Parse the tree to find the PV up to maximum depth `len`. */
+int CAS_GetPV(void* state, int len, CAS_Action* buf)
+{
+    struct CAS_State* cas = (struct CAS_State*)state;
+    struct CAS_Node* bestNode = GetChildWithMostPlayouts(cas->root);
+    int i = 0;
+
+    while (bestNode != NULL && bestNode->children != NULL && i < len)
+    {
+        buf[i++] = bestNode->action;
+        bestNode = GetChildWithMostPlayouts(bestNode);
+    }
+
+    return i;
 }
 
 double TimeSinceStart(clock_t start)

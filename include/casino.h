@@ -132,6 +132,13 @@ EXPORT enum CAS_SearchResult CAS_Search(void* cas,
 /* Get statistics for the best action in the most recent search. */
 EXPORT void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
 
+/* Get the PV for the most recent search.
+ * The return value is the depth of the PV which will be less than or equal to
+ * the buffer size. */
+EXPORT int CAS_GetPV(void* cas,
+                     int len,
+                     CAS_Action* buf);
+
 /* Add an action to an action list. */
 EXPORT void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
 
