@@ -23,6 +23,7 @@
 #define PADDED_BOARD_WIDTH (BOARD_WIDTH + 1)
 #define PADDED_BOARD_SIZE (PADDED_BOARD_WIDTH * PADDED_BOARD_WIDTH)
 #define NUM_PIECES 4
+#define NUM_STAGES 3
 
 /* Define the 8 directions that a chess queen can move in. */
 #define NUM_DIRECTIONS 8
@@ -93,14 +94,14 @@ void PrintState(struct AmazonsState* state)
 {
     int r, c;
     printf("   ---------------------\n");
-    for (r = BOARD_WIDTH; r > 0; r--)
+    for (r = BOARD_WIDTH-1; r >= 0; r--)
     {
-        printf(r < 10 ? "%d  |" : "%d |", r);
-        for (c = 0; c < BOARD_WIDTH; c++) PrintLoc(state, r-1, c);
+        printf("%d |", r);
+        for (c = 0; c < BOARD_WIDTH; c++) PrintLoc(state, r, c);
         printf("\n   ---------------------\n");
     }
 
-    printf("    A B C D E F G H I J\n");
+    printf("   A B C D E F G H I J\n");
 }
 
 /* Helper functions. */
@@ -319,33 +320,58 @@ enum CAS_Player GetScore(CAS_DomainState st)
     return winner;
 }
 
-void PrintAction(CAS_Action action)
+void PrintMoveLoc(int loc)
 {
-    /*
-    int start = GetStart(action), end = GetEnd(action);
-    int r1 = start / 8, c1 = start % 8, r2 = end / 8, c2 = end % 8;
-    printf("%c%d%c%d\n", c1 + 'A', r1 + 1, c2 + 'A', r2 + 1);
-    */
+    int r = loc / PADDED_BOARD_WIDTH;
+    int c = loc % PADDED_BOARD_WIDTH;
+    printf("%c%d", c - 1 + 'A', r);
 }
 
-CAS_Action GetUserAction()
+/* Print a move composed of 3 actions. */
+void PrintMove(struct AmazonsState* board, CAS_Action* actions)
 {
-    char buf[5];
-    int c, r1, c1, r2, c2;
+    int pieceLoc = board->player == P1
+        ? board->p1PieceLocs[actions[0]]
+        : board->p2PieceLocs[actions[0]];
 
-    if (fgets(buf, 5, stdin) == NULL)
+    PrintMoveLoc(pieceLoc);
+    PrintMoveLoc(actions[1]);
+    PrintMoveLoc(actions[2]);
+    printf("\n");
+}
+
+int GetPieceIndex(struct AmazonsState* board, int loc)
+{
+    int i;
+    for (i = 0; i < NUM_PIECES; i++)
+    {
+        if (board->p1PieceLocs[i] == loc || board->p2PieceLocs[i] == loc)
+            return i;
+    }
+
+    return -1;
+}
+
+void GetUserMove(struct AmazonsState* board, CAS_Action* actions)
+{
+    char buf[7];
+    int c, r1, c1, r2, c2, r3, c3;
+
+    if (fgets(buf, 7, stdin) == NULL)
     {
         printf("Error reading stdin.\n");
     }
 
     while ((c = getchar()) != '\n' && c != EOF) { }
 
-    c1 = buf[0]-'A';
-    r1 = buf[1]-'1';
-    c2 = buf[2]-'A';
-    r2 = buf[3]-'1';
+    c1 = buf[0]-'A'+1; r1 = buf[1]-'0';
+    c2 = buf[2]-'A'+1; r2 = buf[3]-'0';
+    c3 = buf[4]-'A'+1; r3 = buf[5]-'0';
 
-    return 0;/*MakeAction(8*r1+c1, 8*r2+c2);*/
+    actions[0] = GetPieceIndex(board, PADDED_BOARD_WIDTH*r1 + c1);
+    actions[1] = PADDED_BOARD_WIDTH*r2 + c2;
+    actions[2] = PADDED_BOARD_WIDTH*r3 + c3;
+    printf("%d %d %d\n", actions[0], actions[1], actions[2]);
 }
 
 void PlayGame(void* casState, struct CAS_SearchConfig* config)
@@ -353,7 +379,8 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     struct AmazonsState* amazonsState;
     struct CAS_ActionStats* stats;
     enum CAS_SearchResult res;
-    CAS_Action userAction;
+    CAS_Action* pv = (CAS_Action*)malloc(NUM_STAGES*sizeof(CAS_Action));
+    int i;
 
     amazonsState = MakeState();
 
@@ -373,13 +400,23 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
         printf("Search complete.\n");
 
         CAS_GetBestAction(casState, stats);
-        printf("Action stats:\n");
-        PrintAction(stats->action);
-        printf("Win rate: %f\n"
+        printf("Action stats:\n"
+               "Win rate: %f\n"
                "Playouts: %d\n",
                stats->winRate, stats->playouts);
 
-        DoAction(amazonsState, stats->action);
+        /* Must have search deep enough to define a 3 stage move. */
+        i = CAS_GetPV(casState, NUM_STAGES, pv);
+        if (i < NUM_STAGES)
+        {
+            printf("Could not search deep enough to define a move.\n");
+            return;
+        }
+
+        PrintMove(amazonsState, pv);
+
+        for (i = 0; i < NUM_STAGES; i++)
+            DoAction(amazonsState, pv[i]);
 
         PrintState(amazonsState);
 
@@ -387,12 +424,14 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
             break;
 
         /* Do the human move. */
-        userAction = GetUserAction();
-        DoAction(amazonsState, userAction);
+        GetUserMove(amazonsState, pv);
+        for (i = 0; i < NUM_STAGES; i++)
+            DoAction(amazonsState, pv[i]);
 
         PrintState(amazonsState);
     }
 
+    free(pv);
     free(stats);
     free(amazonsState);
 }
