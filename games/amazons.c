@@ -19,7 +19,12 @@
    - Piece move: move the selected piece.
    - Arrow shot: shoot the arrow to an empty space. */
 
+#ifdef MINI
+#define BOARD_WIDTH 5
+#else
 #define BOARD_WIDTH 10
+#endif
+
 #define PADDED_BOARD_WIDTH (BOARD_WIDTH + 1)
 #define PADDED_BOARD_SIZE (PADDED_BOARD_WIDTH * PADDED_BOARD_WIDTH)
 #define NUM_PIECES 4
@@ -116,10 +121,17 @@ struct AmazonsState* MakeState()
 
     /* Place the pieces in their starting positions (taking into account
        padding). */
+#ifdef MINI
+    st->p1PieceLocs[0] = 2; st->p1PieceLocs[1] = 4;
+    st->p1PieceLocs[2] = 7; st->p1PieceLocs[3] = 11;
+    st->p2PieceLocs[0] = 19; st->p2PieceLocs[1] = 23;
+    st->p2PieceLocs[2] = 26; st->p2PieceLocs[3] = 28;
+#else
     st->p1PieceLocs[0] = 4; st->p1PieceLocs[1] = 7;
     st->p1PieceLocs[2] = 34; st->p1PieceLocs[3] = 43;
     st->p2PieceLocs[0] = 67; st->p2PieceLocs[1] = 76;
     st->p2PieceLocs[2] = 103; st->p2PieceLocs[3] = 106;
+#endif
     
     memset(st->obstructions, 0, PADDED_BOARD_SIZE*sizeof(int));
     for (i = 0; i < NUM_PIECES; i++)
