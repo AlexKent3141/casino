@@ -158,8 +158,10 @@ void CopyState(CAS_DomainState st, char* buf)
 
     copy->player = orig->player;
     copy->stage = orig->stage;
+    copy->selectedPieceIndex = orig->selectedPieceIndex;
+    copy->pieceTargetLoc = orig->pieceTargetLoc;
     memcpy(copy->p1PieceLocs, orig->p1PieceLocs, NUM_PIECES*sizeof(int));
-    memcpy(copy->p2PieceLocs, orig->p1PieceLocs, NUM_PIECES*sizeof(int));
+    memcpy(copy->p2PieceLocs, orig->p2PieceLocs, NUM_PIECES*sizeof(int));
     memcpy(copy->obstructions, orig->obstructions, PADDED_BOARD_SIZE*sizeof(int));
 }
 
