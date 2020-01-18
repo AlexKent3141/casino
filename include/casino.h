@@ -57,6 +57,7 @@ struct CAS_Node
     struct CAS_Node* parent;       /* The parent of this node. */
     enum CAS_Player player;        /* The player to move. */
     CAS_Action action;             /* The previous action. */
+    int stage;                     /* The move stage of this node. */
     bool expanded;                 /* Whether this node has been expanded. */
     struct CAS_NodeList* children; /* The child nodes of this node. */
     int wins;                      /* The number of wins during playouts. */
@@ -72,6 +73,14 @@ struct CAS_Domain
 {
     /* The maximum number of actions that can be taken in any domain state. */
     int maxActionsPerTurn;
+
+    /* The number of stages each action is broken down into.
+     * This is useful when implementing a game like Amazons where there is an
+     * extremely high branching factor and it makes sense to break actions down
+     * into sub-actions (in the case of Amazons: piece selection, piece movement,
+     * firing arrows).
+     */
+    int actionStages;
 
     /* The size of the domain state. */
     size_t domainStateSize;
