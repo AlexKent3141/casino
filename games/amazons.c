@@ -95,18 +95,39 @@ void PrintLoc(struct AmazonsState* st, int r, int c)
     printf(".|");
 }
 
+void PrintSeparators()
+{
+    int i;
+    printf("  ");
+    for (i = 0; i < 2*BOARD_WIDTH+1; i++)
+        printf("-");
+
+    printf("\n");
+}
+
+void PrintLetters()
+{
+    int i;
+    printf("  ");
+    for (i = 0; i < BOARD_WIDTH; i++)
+        printf(" %c", 'A'+i);
+
+    printf("\n");
+}
+
 void PrintState(struct AmazonsState* state)
 {
     int r, c;
-    printf("   ---------------------\n");
+    PrintSeparators();
     for (r = BOARD_WIDTH-1; r >= 0; r--)
     {
         printf("%d |", r);
         for (c = 0; c < BOARD_WIDTH; c++) PrintLoc(state, r, c);
-        printf("\n   ---------------------\n");
+        printf("\n");
+        PrintSeparators();
     }
 
-    printf("   A B C D E F G H I J\n");
+    PrintLetters();
 }
 
 /* Helper functions. */
