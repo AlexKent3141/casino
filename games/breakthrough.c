@@ -423,6 +423,7 @@ int main()
 
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
+    domain.actionStages = 1;
     domain.domainStateSize = sizeof(struct BreakState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;

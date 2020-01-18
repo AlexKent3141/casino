@@ -206,6 +206,7 @@ int main()
 
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
+    domain.actionStages = 1;
     domain.domainStateSize = sizeof(struct TTTState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
