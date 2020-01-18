@@ -132,12 +132,12 @@ struct AmazonsState* MakeState()
     st->p2PieceLocs[0] = 67; st->p2PieceLocs[1] = 76;
     st->p2PieceLocs[2] = 103; st->p2PieceLocs[3] = 106;
 #endif
-    
+
     memset(st->obstructions, 0, PADDED_BOARD_SIZE*sizeof(int));
     for (i = 0; i < NUM_PIECES; i++)
     {
-        st->obstructions[st->p1PieceLocs[i]] =  1;
-        st->obstructions[st->p2PieceLocs[i]] =  1;
+        st->obstructions[st->p1PieceLocs[i]] = 1;
+        st->obstructions[st->p2PieceLocs[i]] = 1;
     }
 
     /* Setup the off-board boundary. */
@@ -385,7 +385,6 @@ void GetUserMove(struct AmazonsState* board, CAS_Action* actions)
     actions[0] = GetPieceIndex(board, PADDED_BOARD_WIDTH*r1 + c1);
     actions[1] = PADDED_BOARD_WIDTH*r2 + c2;
     actions[2] = PADDED_BOARD_WIDTH*r3 + c3;
-    printf("%d %d %d\n", actions[0], actions[1], actions[2]);
 }
 
 void PlayGame(void* casState, struct CAS_SearchConfig* config)
@@ -461,6 +460,7 @@ int main()
 
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
+    domain.actionStages = NUM_STAGES;
     domain.domainStateSize = sizeof(struct AmazonsState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
