@@ -10,6 +10,7 @@ My MCTS implementation in OnePunchGo is very much Go-specific. This library is a
 * Fast single-threaded MCTS implementation with UCB-based exploration/exploitation.
 * Ability to apply MCTS to a wide range of problems.
 * Customisable selection and playout policies.
+* Move groups (see Amazons example).
 
 ## TODO
 Add more MCTS extensions:
@@ -28,7 +29,9 @@ One unusual feature of Casino is that it does not perform any dynamic memory all
 The search routine will keep running until it runs out of resources i.e. available memory or time.
 
 ## Building
-I have only tested Casino on Linux. I think it should compile under Cygwin on Windows but this is currently untested. The code itself is written in C89 and only depends on the standard library so it should be completely portable.
+Casino is written in C89 and only depends on the standard library so it should be completely portable. The library must be compiled using GCC (GCC exclusive extensions are used).
+
+I have done most of my testing on Linux but have confirmed that it is possible to compile Casino (and run the examples) in Windows under Cygwin.
 
 ### Casino library
 The Casino library can be compiled by running `make` in the root directory. This will produce the libcasino.so shared library which can be linked against by applications.
@@ -38,8 +41,9 @@ All of the exported functions are defined in the casino.h header in the include 
 ### Unit tests
 The tests can be compiled by running `make test` in the root directory.
 
-### Tic-tac-toe example
-The tic-tac-toe example can be compiled by running `make tictactoe` in the root directory. Running the tictactoe binary will allow you to play against the AI in the command line.
+### Example games
+Tic-tac-toe: compiled by running `make tictactoe`
 
-### Breakthrough example
-The Breakthrough example can be compiled by running `make break` in the root directory. Running the break binary will allow you to play against the AI in the command line.
+Breakthrough: compiled by running `make break`
+
+Amazons: compiled by running `make amazons`
