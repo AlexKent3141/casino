@@ -59,19 +59,31 @@ struct CAS_Node* Expand(struct CAS_State* cas,
                         struct CAS_ActionList* actionList)
 {
     struct CAS_Node* expanded = n;
+    enum CAS_Player nextPlayer;
+    int nextActionStage;
     size_t i;
 
     actionList->numActions = 0;
     domain->GetStateActions(position, actionList);
     if (actionList->numActions > 0)
     {
+        /* Work out who the next player is taking into account action stages. */
+        nextPlayer = n->player;
+        nextActionStage = (n->stage + 1) % domain->actionStages;
+        if (nextActionStage == 0)
+            nextPlayer = nextPlayer == P1 ? P2 : P1;
+
         n->children = GetNodeList(cas->mem, cas->maxActions);
         if (n->children == NULL)
             return NULL;
 
         for (i = 0; i < actionList->numActions; i++)
         {
-            AddNode(n->children, n, actionList->actions[i]);
+            AddNode(n->children,
+                    n,
+                    nextPlayer,
+                    nextActionStage,
+                    actionList->actions[i]);
         }
 
         expanded = &n->children->nodes[0];
@@ -108,11 +120,17 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
 {
     do
     {
+        /* A node's score is a reflection of how good the move to reach that node
+           was i.e. a move for the other player. This is why we check against the
+           parent node's player below. */
         n->playouts++;
-        if (winner == NONE)
-            n->draws++;
-        else if (n->player != winner)
-            n->wins++;
+        if (n->parent != NULL)
+        {
+            if (winner == NONE)
+                n->draws++;
+            else if (n->parent->player == winner)
+                n->wins++;
+        }
 
         n = n->parent;
 

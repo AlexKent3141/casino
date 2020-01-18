@@ -12,6 +12,7 @@ struct CAS_Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
     root->parent = NULL;
     root->player = player;
     root->action = BAD_ACTION;
+    root->stage = 0;
     root->expanded = false;
     root->children = NULL;
     root->wins = 0;
@@ -40,7 +41,11 @@ struct CAS_NodeList* GetNodeList(struct MemoryState* mem, size_t maxActions)
 }
 
 /* This method creates and appends a new node. */
-void AddNode(struct CAS_NodeList* list, struct CAS_Node* parent, CAS_Action action)
+void AddNode(struct CAS_NodeList* list,
+             struct CAS_Node* parent,
+             enum CAS_Player nextPlayer,
+             int nextActionStage,
+             CAS_Action action)
 {
     struct CAS_Node* n;
     
@@ -51,8 +56,9 @@ void AddNode(struct CAS_NodeList* list, struct CAS_Node* parent, CAS_Action acti
 
     n = &list->nodes[list->numNodes++];
     n->parent = parent;
-    n->player = parent->player == P1 ? P2 : P1;
+    n->player = nextPlayer;
     n->action = action;
+    n->stage = nextActionStage;
     n->expanded = false;
     n->children = NULL; /* This is initialised during expansion. */
     n->wins = 0;
