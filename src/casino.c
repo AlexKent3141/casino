@@ -73,7 +73,7 @@ struct CAS_Node* Expand(struct CAS_State* cas,
         if (nextActionStage == 0)
             nextPlayer = nextPlayer == P1 ? P2 : P1;
 
-        n->children = GetNodeList(cas->mem, cas->maxActions);
+        n->children = GetNodeList(cas->mem, actionList->numActions);
         if (n->children == NULL)
             return NULL;
 
