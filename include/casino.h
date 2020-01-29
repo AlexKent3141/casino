@@ -5,6 +5,9 @@
  * This header file defines the API for the Casino library.
  */
 
+#define MAJOR_VERSION 1
+#define MINOR_VERSION 0
+
 #include "stdbool.h"
 #include "stdint.h"
 #include "stdlib.h"
