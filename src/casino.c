@@ -71,7 +71,7 @@ struct CAS_Node* Expand(struct CAS_State* cas,
         nextPlayer = n->player;
         nextActionStage = (n->stage + 1) % domain->actionStages;
         if (nextActionStage == 0)
-            nextPlayer = nextPlayer == P1 ? P2 : P1;
+            nextPlayer = nextPlayer == CAS_P1 ? CAS_P2 : CAS_P1;
 
         n->children = GetNodeList(cas->mem, actionList->numActions);
         if (n->children == NULL)
@@ -104,7 +104,7 @@ enum CAS_Player Simulate(struct CAS_State* cas,
 
     actionList->numActions = 0;
     action = config->PlayoutPolicy(cas, domain, position, actionList);
-    while (action != BAD_ACTION)
+    while (action != CAS_BAD_ACTION)
     {
         domain->DoAction(position, action);
 
@@ -126,7 +126,7 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
         n->playouts++;
         if (n->parent != NULL)
         {
-            if (winner == NONE)
+            if (winner == CAS_NONE)
                 n->draws++;
             else if (n->parent->player == winner)
                 n->wins++;
@@ -207,7 +207,7 @@ enum CAS_SearchResult CAS_Search(void* state,
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
-        return INSUFFICIENT_MEMORY;
+        return CAS_INSUFFICIENT_MEMORY;
 
     ResetTree(cas->mem);
 
@@ -215,7 +215,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     /* This also flags to the memory state where to start in the buffer. */
     cas->root = MakeRoot(cas->mem, player);
     if (cas->root == NULL)
-        return INSUFFICIENT_MEMORY;
+        return CAS_INSUFFICIENT_MEMORY;
 
     /* Perform the MCTS procedure while resources remain. */
     domain = cas->domain;
@@ -223,7 +223,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     startTime = clock();
     pos = GetMemory(cas->mem, domain->domainStateSize);
     if (pos == NULL)
-        return INSUFFICIENT_MEMORY;
+        return CAS_INSUFFICIENT_MEMORY;
 
     do 
     {
@@ -243,5 +243,5 @@ enum CAS_SearchResult CAS_Search(void* state,
     } while (TimeSinceStart(startTime) < ms/1000.0);
 
     /* Now examine the tree to find the best move. */
-    return SUCCESS;
+    return CAS_SUCCESS;
 }

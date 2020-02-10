@@ -21,19 +21,19 @@ extern "C" {
 typedef uint16_t CAS_Action;
 typedef void* CAS_DomainState;
 
-static const CAS_Action BAD_ACTION = ~(CAS_Action)0;
+static const CAS_Action CAS_BAD_ACTION = ~(CAS_Action)0;
 
 enum CAS_Player
 {
-    NONE, /* This constant is used to indicate a draw. */
-    P1,
-    P2 
+    CAS_NONE, /* This constant is used to indicate a draw. */
+    CAS_P1,
+    CAS_P2
 };
 
 enum CAS_SearchResult
 {
-    SUCCESS,
-    INSUFFICIENT_MEMORY
+    CAS_SUCCESS,
+    CAS_INSUFFICIENT_MEMORY
 };
 
 struct CAS_ActionList

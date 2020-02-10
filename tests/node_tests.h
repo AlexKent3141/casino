@@ -32,7 +32,7 @@ TEST MakeRoot_Test()
 
     /* Create a root Node. */
     mem = GetMemoryState(sizeof(struct CAS_Node));
-    root = MakeRoot(mem, P1);
+    root = MakeRoot(mem, CAS_P1);
     ASSERT(root != NULL);
 
     free(buf);
@@ -69,7 +69,7 @@ TEST AddNode_Test()
     /* Create a MemoryState and a root Node. */
     mem = GetMemoryState(sizeof(struct CAS_NodeList)
         + (MaxActions+1)*sizeof(struct CAS_Node));
-    root = MakeRoot(mem, P1);
+    root = MakeRoot(mem, CAS_P1);
     ASSERT(root != NULL);
 
     /* Create a NodeList. */
@@ -79,7 +79,7 @@ TEST AddNode_Test()
     /* Add nodes. */
     for (action = 0; action < MaxActions; action++)
     {
-        AddNode(nodeList, root, action);
+        AddNode(nodeList, root, CAS_P2, 0, action);
     }
 
     ASSERT(nodeList->numNodes == MaxActions);

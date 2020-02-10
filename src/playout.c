@@ -10,7 +10,7 @@ CAS_Action CAS_DefaultPlayoutPolicy(void* cas,
                                     CAS_DomainState position,
                                     struct CAS_ActionList* list)
 {
-    CAS_Action action = BAD_ACTION;
+    CAS_Action action = CAS_BAD_ACTION;
     domain->GetStateActions(position, list);
     if (list->numActions > 0)
     {

@@ -52,7 +52,7 @@ struct BreakState
 struct BreakState* MakeState()
 {
     struct BreakState* st = (struct BreakState*)malloc(sizeof(struct BreakState));
-    st->player = P1;
+    st->player = CAS_P1;
     st->p1Pieces = rows[0] | rows[1];
     st->p2Pieces = rows[6] | rows[7];
     return st;
@@ -61,11 +61,11 @@ struct BreakState* MakeState()
 enum CAS_Player CheckForWinner(struct BreakState* st)
 {
     if (st->p1Pieces & rows[7])
-        return P1;
+        return CAS_P1;
     else if (st->p2Pieces & rows[0])
-        return P2;
+        return CAS_P2;
     else
-        return NONE;
+        return CAS_NONE;
 }
 
 CAS_Action MakeAction(int start, int end)
@@ -94,12 +94,12 @@ int PopLSB(bb* bits)
 CAS_Action GetWinningMove(CAS_DomainState st)
 {
     struct BreakState* board = (struct BreakState*)st;
-    CAS_Action winningMove = BAD_ACTION;
+    CAS_Action winningMove = CAS_BAD_ACTION;
     bb friendly, winners;
     int loc;
 
-    friendly = board->player == P1 ? board->p1Pieces : board->p2Pieces;
-    winners = board->player == P1 ? friendly & rows[6] : friendly & rows[1];
+    friendly = board->player == CAS_P1 ? board->p1Pieces : board->p2Pieces;
+    winners = board->player == CAS_P1 ? friendly & rows[6] : friendly & rows[1];
 
     if (winners)
     {
@@ -108,13 +108,13 @@ CAS_Action GetWinningMove(CAS_DomainState st)
         {
             winners &= ~cols[0];
             loc = PopLSB(&winners);
-            winningMove = MakeAction(loc, board->player == P1 ? loc + 7 : loc - 9);
+            winningMove = MakeAction(loc, board->player == CAS_P1 ? loc + 7 : loc - 9);
         }
         else
         {
             winners &= cols[0];
             loc = PopLSB(&winners);
-            winningMove = MakeAction(loc, board->player == P1 ? loc + 9 : loc - 7);
+            winningMove = MakeAction(loc, board->player == CAS_P1 ? loc + 9 : loc - 7);
         }
     }
 
@@ -127,27 +127,27 @@ void GetCaptures(CAS_DomainState st, struct CAS_ActionList* actions)
     bb friendly, enemy, leftDiag, rightDiag, temp;
     int start, end;
 
-    friendly = board->player == P1 ? board->p1Pieces : board->p2Pieces;
-    enemy = board->player == P1 ? board->p2Pieces : board->p1Pieces;
+    friendly = board->player == CAS_P1 ? board->p1Pieces : board->p2Pieces;
+    enemy = board->player == CAS_P1 ? board->p2Pieces : board->p1Pieces;
 
     temp = enemy & ~cols[7];
-    leftDiag = board->player == P1 ? temp >> 7 : temp << 9;
+    leftDiag = board->player == CAS_P1 ? temp >> 7 : temp << 9;
     leftDiag &= friendly;
 
     temp = enemy & ~cols[0];
-    rightDiag = board->player == P1 ? temp >> 9 : temp << 7;
+    rightDiag = board->player == CAS_P1 ? temp >> 9 : temp << 7;
     rightDiag &= friendly;
 
     while (leftDiag)
     {
         start = PopLSB(&leftDiag);
-        end = board->player == P1 ? start + 7 : start - 9;
+        end = board->player == CAS_P1 ? start + 7 : start - 9;
         CAS_AddAction(actions, MakeAction(start, end));
     }
     while (rightDiag)
     {
         start = PopLSB(&rightDiag);
-        end = board->player == P1 ? start + 9 : start - 7;
+        end = board->player == CAS_P1 ? start + 9 : start - 7;
         CAS_AddAction(actions, MakeAction(start, end));
     }
 }
@@ -156,7 +156,7 @@ CAS_Action GetRandomCapture(void* casState,
                             CAS_DomainState st,
                             struct CAS_ActionList* list)
 {
-    CAS_Action cap = BAD_ACTION;
+    CAS_Action cap = CAS_BAD_ACTION;
     GetCaptures(st, list);
     if (list->numActions > 0)
     {
@@ -173,7 +173,7 @@ double BiasedNodeScore(CAS_DomainState position, struct CAS_Node* n)
     const double ExplorationConstant = sqrt(2);
 
     struct BreakState* board = (struct BreakState*)position;
-    bb enemy = board->player == P1 ? board->p2Pieces : board->p1Pieces;
+    bb enemy = board->player == CAS_P1 ? board->p2Pieces : board->p1Pieces;
     double score = 0;
 
     if (enemy & squares[GetEnd(n->action)])
@@ -205,18 +205,18 @@ CAS_Action BiasedPlayoutPolicy(void* casState,
                                  struct CAS_ActionList* list)
 {
     /* Make sure that the game isn't over already. */
-    CAS_Action action = BAD_ACTION;
-    if (CheckForWinner(position) != NONE)
+    CAS_Action action = CAS_BAD_ACTION;
+    if (CheckForWinner(position) != CAS_NONE)
         return action;
 
     /* If a winning move is available then play it. */
     action = GetWinningMove(position);
-    if (action != BAD_ACTION)
+    if (action != CAS_BAD_ACTION)
         return action;
 
     /* If there are captures available then play one with high probability. */
     action = GetRandomCapture(casState, position, list);
-    if (action != BAD_ACTION)
+    if (action != CAS_BAD_ACTION)
     {
         if (CAS_Random(casState, 3) > 0)
         {
@@ -246,46 +246,46 @@ void GetStateActions(CAS_DomainState st, struct CAS_ActionList* actions)
     int start, end;
 
     /* Check whether the game is already over. */
-    if (CheckForWinner(board) != NONE)
+    if (CheckForWinner(board) != CAS_NONE)
         return;
 
-    friendly = board->player == P1 ? board->p1Pieces : board->p2Pieces;
-    enemy = board->player == P1 ? board->p2Pieces : board->p1Pieces;
+    friendly = board->player == CAS_P1 ? board->p1Pieces : board->p2Pieces;
+    enemy = board->player == CAS_P1 ? board->p2Pieces : board->p1Pieces;
     all = friendly | enemy;
     empty = ~all;
 
     /* Generate the available moves for the current player. */
     /* Pieces can only go forward to empty spaces, but can either move
        or capture diagonally forward. */
-    forward = board->player == P1
+    forward = board->player == CAS_P1
         ? (empty >> 8) & friendly
         : (empty << 8) & friendly;
 
     temp = ~friendly & ~cols[7];
-    leftDiag = board->player == P1 ? temp >> 7 : temp << 9;
+    leftDiag = board->player == CAS_P1 ? temp >> 7 : temp << 9;
     leftDiag &= friendly;
 
     temp = ~friendly & ~cols[0];
-    rightDiag = board->player == P1 ? temp >> 9 : temp << 7;
+    rightDiag = board->player == CAS_P1 ? temp >> 9 : temp << 7;
     rightDiag &= friendly;
 
     /* We have the pieces which move in each direction, now produce moves. */
     while (forward)
     {
         start = PopLSB(&forward);
-        end = board->player == P1 ? start + 8 : start - 8;
+        end = board->player == CAS_P1 ? start + 8 : start - 8;
         CAS_AddAction(actions, MakeAction(start, end));
     }
     while (leftDiag)
     {
         start = PopLSB(&leftDiag);
-        end = board->player == P1 ? start + 7 : start - 9;
+        end = board->player == CAS_P1 ? start + 7 : start - 9;
         CAS_AddAction(actions, MakeAction(start, end));
     }
     while (rightDiag)
     {
         start = PopLSB(&rightDiag);
-        end = board->player == P1 ? start + 9 : start - 7;
+        end = board->player == CAS_P1 ? start + 9 : start - 7;
         CAS_AddAction(actions, MakeAction(start, end));
     }
 }
@@ -295,7 +295,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
     struct BreakState* board = (struct BreakState*)st;
     int start = GetStart(action), end = GetEnd(action);
     
-    if (board->player == P1)
+    if (board->player == CAS_P1)
     {
         board->p1Pieces ^= (squares[start] | squares[end]);
         board->p2Pieces &= ~squares[end];
@@ -306,7 +306,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
         board->p1Pieces &= ~squares[end];
     }
 
-    board->player = board->player == P1 ? P2 : P1;
+    board->player = board->player == CAS_P1 ? CAS_P2 : CAS_P1;
 }
 
 enum CAS_Player GetScore(CAS_DomainState st)
@@ -374,12 +374,12 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     breakState = MakeState();
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
 
-    while (CheckForWinner(breakState) == NONE)
+    while (CheckForWinner(breakState) == CAS_NONE)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, breakState, P1, 5000);
-        if (res != SUCCESS)
+        res = CAS_Search(casState, config, breakState, CAS_P1, 5000);
+        if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
             break;
@@ -398,7 +398,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
         PrintState(breakState);
 
-        if (CheckForWinner(breakState) != NONE)
+        if (CheckForWinner(breakState) != CAS_NONE)
             break;
 
         /* Do the human move. */

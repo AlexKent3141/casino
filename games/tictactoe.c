@@ -15,8 +15,8 @@ struct TTTState
 struct TTTState* MakeState()
 {
     struct TTTState* st = (struct TTTState*)malloc(sizeof(struct TTTState));
-    st->player = P1;
-    memset(st->pieces, NONE, 9*sizeof(enum CAS_Player));
+    st->player = CAS_P1;
+    memset(st->pieces, CAS_NONE, 9*sizeof(enum CAS_Player));
     return st;
 }
 
@@ -34,12 +34,12 @@ bool CheckPlayerIsWinner(struct TTTState* st, enum CAS_Player p)
 
 enum CAS_Player CheckForWinner(struct TTTState* st)
 {
-    if (CheckPlayerIsWinner(st, P1))
-        return P1;
-    else if (CheckPlayerIsWinner(st, P2))
-        return P2;
+    if (CheckPlayerIsWinner(st, CAS_P1))
+        return CAS_P1;
+    else if (CheckPlayerIsWinner(st, CAS_P2))
+        return CAS_P2;
     else
-        return NONE;
+        return CAS_NONE;
 }
 
 void CopyState(CAS_DomainState st, char* buf)
@@ -60,13 +60,13 @@ void GetStateActions(CAS_DomainState st, struct CAS_ActionList* actions)
     ttt = (struct TTTState*)st;
 
     /* Check whether a player has won. */
-    if (CheckForWinner(ttt) != NONE)
+    if (CheckForWinner(ttt) != CAS_NONE)
         return;
 
     /* Find where the current player can play. */
     for (i = 0; i < 9; i++)
     {
-        if (ttt->pieces[i] == NONE)
+        if (ttt->pieces[i] == CAS_NONE)
         {
             CAS_AddAction(actions, i);
         }
@@ -78,7 +78,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
     struct TTTState* ttt;
     ttt = (struct TTTState*)st;
     ttt->pieces[action] = ttt->player;
-    ttt->player = ttt->player == P1 ? P2 : P1;
+    ttt->player = ttt->player == CAS_P1 ? CAS_P2 : CAS_P1;
 }
 
 enum CAS_Player GetScore(CAS_DomainState st)
@@ -93,12 +93,12 @@ bool IsGameOver(struct TTTState* ttt)
     bool boardFull = true;
     int i;
 
-    if (CheckForWinner(ttt) != NONE)
+    if (CheckForWinner(ttt) != CAS_NONE)
         return true;
 
     for (i = 0; i < 9 && boardFull; i++)
     {
-        boardFull = ttt->pieces[i] != NONE;
+        boardFull = ttt->pieces[i] != CAS_NONE;
     }
 
     return boardFull;
@@ -106,7 +106,7 @@ bool IsGameOver(struct TTTState* ttt)
 
 char GetPieceChar(enum CAS_Player player)
 {
-    return player == P1 ? 'O' : player == P2 ? 'X' : ' ';
+    return player == CAS_P1 ? 'O' : player == CAS_P2 ? 'X' : ' ';
 }
 
 void PrintState(struct TTTState* state)
@@ -161,8 +161,8 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, tttState, P1, 500);
-        if (res != SUCCESS)
+        res = CAS_Search(casState, config, tttState, CAS_P1, 500);
+        if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
             break;
@@ -172,7 +172,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
         CAS_GetBestAction(casState, stats);
         printf("Action stats:\n"
-               "Best move: %ld\n"
+               "Best move: %d\n"
                "Win rate: %f\n"
                "Playouts: %d\n",
                stats->action, stats->winRate, stats->playouts);

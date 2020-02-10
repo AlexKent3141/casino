@@ -11,7 +11,7 @@ struct CAS_Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
     root = (struct CAS_Node*)GetMemory(mem, sizeof(struct CAS_Node));
     root->parent = NULL;
     root->player = player;
-    root->action = BAD_ACTION;
+    root->action = CAS_BAD_ACTION;
     root->stage = 0;
     root->expanded = false;
     root->children = NULL;
@@ -50,7 +50,7 @@ void AddNode(struct CAS_NodeList* list,
     struct CAS_Node* n;
     
     assert(parent != NULL);
-    assert(parent->player != NONE);
+    assert(parent->player != CAS_NONE);
     assert(list != NULL);
     assert(list->nodes != NULL);
 

@@ -137,7 +137,7 @@ struct AmazonsState* MakeState()
         (struct AmazonsState*)malloc(sizeof(struct AmazonsState));
     int i;
 
-    st->player = P1;
+    st->player = CAS_P1;
     st->stage = PIECE_SELECTION;
 
     /* Place the pieces in their starting positions (taking into account
@@ -227,7 +227,7 @@ void GetPieceSelectionActions(struct AmazonsState* board,
     int i, loc;
     for (i = 0; i < NUM_PIECES; i++)
     {
-        loc = board->player == P1 ? board->p1PieceLocs[i] : board->p2PieceLocs[i];
+        loc = board->player == CAS_P1 ? board->p1PieceLocs[i] : board->p2PieceLocs[i];
         if (CanMove(board, loc))
         {
             CAS_AddAction(actions, i);
@@ -249,7 +249,7 @@ void GetQueenMoveActions(struct AmazonsState* board,
 void GetPieceMoveActions(struct AmazonsState* board,
                          struct CAS_ActionList* actions)
 {
-    int pieceLoc = board->player == P1
+    int pieceLoc = board->player == CAS_P1
         ? board->p1PieceLocs[board->selectedPieceIndex]
         : board->p2PieceLocs[board->selectedPieceIndex];
 
@@ -295,7 +295,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
         }
         case PIECE_MOVE:
         {
-            if (board->player == P1)
+            if (board->player == CAS_P1)
             {
                 loc = board->p1PieceLocs[board->selectedPieceIndex];
                 board->p1PieceLocs[board->selectedPieceIndex] = action;
@@ -315,7 +315,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
         case ARROW_SHOT:
         {
             board->obstructions[action] = 1;
-            board->player = board->player == P1 ? P2 : P1;
+            board->player = board->player == CAS_P1 ? CAS_P2 : CAS_P1;
             board->stage = PIECE_SELECTION;
             break;
         }
@@ -329,25 +329,25 @@ enum CAS_Player GetScore(CAS_DomainState st)
     enum CAS_Player winner;
     int i;
 
-    if (board->player == P1)
+    if (board->player == CAS_P1)
     {
-        winner = P2;
-        for (i = 0; i < NUM_PIECES && winner == P2; i++)
+        winner = CAS_P2;
+        for (i = 0; i < NUM_PIECES && winner == CAS_P2; i++)
         {
             if (CanMove(board, board->p1PieceLocs[i]))
             {
-                winner = NONE;
+                winner = CAS_NONE;
             }
         }
     }
     else
     {
-        winner = P1;
-        for (i = 0; i < NUM_PIECES && winner == P1; i++)
+        winner = CAS_P1;
+        for (i = 0; i < NUM_PIECES && winner == CAS_P1; i++)
         {
             if (CanMove(board, board->p2PieceLocs[i]))
             {
-                winner = NONE;
+                winner = CAS_NONE;
             }
         }
     }
@@ -365,7 +365,7 @@ void PrintMoveLoc(int loc)
 /* Print a move composed of 3 actions. */
 void PrintMove(struct AmazonsState* board, CAS_Action* actions)
 {
-    int pieceLoc = board->player == P1
+    int pieceLoc = board->player == CAS_P1
         ? board->p1PieceLocs[actions[0]]
         : board->p2PieceLocs[actions[0]];
 
@@ -420,12 +420,12 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
 
-    while (GetScore(amazonsState) == NONE)
+    while (GetScore(amazonsState) == CAS_NONE)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, amazonsState, P1, 500);
-        if (res != SUCCESS)
+        res = CAS_Search(casState, config, amazonsState, CAS_P1, 500);
+        if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
             break;
@@ -454,7 +454,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
         PrintState(amazonsState);
 
-        if (GetScore(amazonsState) != NONE)
+        if (GetScore(amazonsState) != CAS_NONE)
             break;
 
         /* Do the human move. */
