@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "node.h"
 #include "time.h"
+#include "thread.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 {
@@ -191,19 +192,90 @@ double TimeSinceStart(clock_t start)
     return (double)(clock() - start) / CLOCKS_PER_SEC;
 }
 
+struct WorkerData
+{
+    struct CAS_State* cas;
+    struct CAS_SearchConfig* config;
+    CAS_DomainState initialPosition;
+    int duration;
+    mutex_t* treeLock;
+    struct CAS_ActionList* actionList;
+    CAS_DomainState workerPosition;
+};
+
+void* SearchWorker(void* data)
+{
+    struct WorkerData* workerData = (struct WorkerData*)data;
+    struct CAS_Node* n, *selected;
+    enum CAS_Player winner;
+    struct CAS_State* cas = workerData->cas;
+    struct CAS_Domain* domain = cas->domain;
+    clock_t startTime = clock();
+
+    /* Perform the MCTS procedure while resources remain. */
+    /* All access to the tree is synchronised by the shared mutex. */
+    do
+    {
+        domain->CopyState(
+            workerData->initialPosition,
+            workerData->workerPosition);
+
+        selected = Select(
+            cas,
+            workerData->config,
+            cas->domain,
+            cas->root,
+            workerData->workerPosition);
+
+        LockMutex(workerData->treeLock);
+
+        n = Expand(
+            cas,
+            cas->domain,
+            selected,
+            workerData->workerPosition,
+            workerData->actionList);
+
+        UnlockMutex(workerData->treeLock);
+
+        if (n == NULL)
+        {
+            /* Out of memory, just keep doing playouts on the current tree. */
+            n = selected;
+        }
+
+        winner = Simulate(
+            cas,
+            workerData->config,
+            cas->domain,
+            workerData->workerPosition,
+            workerData->actionList);
+
+        LockMutex(workerData->treeLock);
+
+        Backprop(n, winner);
+
+        UnlockMutex(workerData->treeLock);
+
+    } while (TimeSinceStart(startTime) < workerData->duration / 1000.0);
+
+    return NULL;
+}
+
 enum CAS_SearchResult CAS_Search(void* state,   
                                  struct CAS_SearchConfig* config,
                                  CAS_DomainState initialPosition,
                                  enum CAS_Player player,
-                                 int ms)
+                                 int duration)
 {
     struct CAS_State* cas;
-    struct CAS_Domain* domain;
-    struct CAS_ActionList* actionList;
-    CAS_DomainState pos;
-    enum CAS_Player winner;
-    struct CAS_Node* n, *selected;
-    clock_t startTime;
+    struct WorkerData* workerData;
+    thread_t* tids;
+    size_t i;
+    mutex_t treeLock;
+
+    if (CreateMutex(&treeLock) != 0)
+        return CAS_COULD_NOT_INITIALISE_MUTEX;
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
@@ -217,31 +289,35 @@ enum CAS_SearchResult CAS_Search(void* state,
     if (cas->root == NULL)
         return CAS_INSUFFICIENT_MEMORY;
 
-    /* Perform the MCTS procedure while resources remain. */
-    domain = cas->domain;
-    actionList = GetActionList(cas);
-    startTime = clock();
-    pos = GetMemory(cas->mem, domain->domainStateSize);
-    if (pos == NULL)
-        return CAS_INSUFFICIENT_MEMORY;
+    /* Initialise and kick off each of the worker threads. */
+    tids = (thread_t*)GetMemory(
+        cas->mem,
+        config->numThreads*sizeof(thread_t));
 
-    do 
+    for (i = 0; i < config->numThreads; i++)
     {
-        domain->CopyState(initialPosition, pos);
+        workerData = (struct WorkerData*)GetMemory(
+            cas->mem,
+            sizeof(struct WorkerData));
 
-        selected = Select(cas, config, domain, cas->root, pos);
-        n = Expand(cas, domain, selected, pos, actionList);
-        if (n == NULL)
-        {
-            /* Out of memory, just keep doing playouts on the current tree. */
-            n = selected;
-        }
+        workerData->cas = cas;
+        workerData->config = config;
+        workerData->initialPosition = initialPosition;
+        workerData->duration = duration,
+        workerData->treeLock = &treeLock,
 
-        winner = Simulate(cas, config, domain, pos, actionList);
-        Backprop(n, winner);
+        /* Each worker needs its own action list to populate and domain state
+           to work from. */
+        workerData->actionList = GetActionList(cas);
+        workerData->workerPosition =
+            GetMemory(cas->mem, cas->domain->domainStateSize);
 
-    } while (TimeSinceStart(startTime) < ms/1000.0);
+        CreateThread(&tids[i], &SearchWorker, workerData);
+    }
 
-    /* Now examine the tree to find the best move. */
+    /* Wait for all threads to terminate. */
+    for (i = 0; i < config->numThreads; i++)
+        JoinThread(&tids[i]);
+
     return CAS_SUCCESS;
 }

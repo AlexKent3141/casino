@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wpedantic -ansi -O3 -fPIC -fvisibility=hidden
-LIB=-lm
+LIB=-lm -lpthread
 
 SLIB=libcasino.so
 TEST=test

@@ -33,7 +33,8 @@ enum CAS_Player
 enum CAS_SearchResult
 {
     CAS_SUCCESS,
-    CAS_INSUFFICIENT_MEMORY
+    CAS_INSUFFICIENT_MEMORY,
+    CAS_COULD_NOT_INITIALISE_MUTEX
 };
 
 struct CAS_ActionList
@@ -107,6 +108,8 @@ struct CAS_Domain
 
 struct CAS_SearchConfig
 {
+    size_t numThreads; /* The number of threads to use when searching. */
+
     /*
      * The selection policy to use.
      * This is used to select which node to expand next in the tree.
