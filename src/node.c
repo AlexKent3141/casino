@@ -1,5 +1,6 @@
 #include "node.h"
 #include "memory.h"
+#include "thread.h"
 #include "assert.h"
 
 struct CAS_Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
@@ -9,6 +10,9 @@ struct CAS_Node* MakeRoot(struct MemoryState* mem, enum CAS_Player player)
     mem->bufRoot = mem->bufNext;
 
     root = (struct CAS_Node*)GetMemory(mem, sizeof(struct CAS_Node));
+
+    CreateMutex(&root->mutex);
+
     root->parent = NULL;
     root->player = player;
     root->action = CAS_BAD_ACTION;
@@ -55,6 +59,9 @@ void AddNode(struct CAS_NodeList* list,
     assert(list->nodes != NULL);
 
     n = &list->nodes[list->numNodes++];
+
+    CreateMutex(&n->mutex);
+
     n->parent = parent;
     n->player = nextPlayer;
     n->action = action;

@@ -1,21 +1,21 @@
 #include "thread.h"
 
-int CreateMutex(mutex_t* lock)
+int CreateMutex(CAS_Mutex* lock)
 {
     return pthread_mutex_init(lock, NULL);
 }
 
-void DestroyMutex(mutex_t* lock)
+void DestroyMutex(CAS_Mutex* lock)
 {
     pthread_mutex_destroy(lock);
 }
 
-void LockMutex(mutex_t* lock)
+void LockMutex(CAS_Mutex* lock)
 {
     pthread_mutex_lock(lock);
 }
 
-void UnlockMutex(mutex_t* lock)
+void UnlockMutex(CAS_Mutex* lock)
 {
     pthread_mutex_unlock(lock);
 }

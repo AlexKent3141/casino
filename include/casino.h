@@ -11,6 +11,7 @@
 #include "stdbool.h"
 #include "stdint.h"
 #include "stdlib.h"
+#include "pthread.h"
 
 #define EXPORT __attribute__ ((visibility("default")))
 
@@ -20,6 +21,7 @@ extern "C" {
 
 typedef uint16_t CAS_Action;
 typedef void* CAS_DomainState;
+typedef pthread_mutex_t CAS_Mutex;
 
 static const CAS_Action CAS_BAD_ACTION = ~(CAS_Action)0;
 
@@ -58,6 +60,7 @@ struct CAS_NodeList
 
 struct CAS_Node
 {
+    CAS_Mutex mutex;
     struct CAS_Node* parent;       /* The parent of this node. */
     enum CAS_Player player;        /* The player to move. */
     CAS_Action action;             /* The previous action. */

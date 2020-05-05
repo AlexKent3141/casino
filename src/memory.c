@@ -1,6 +1,7 @@
 #include "memory.h"
 #include "assert.h"
 #include "string.h"
+#include "thread.h"
 
 struct MemoryState* MemoryInit(size_t bufSize, char* buf)
 {
@@ -14,6 +15,8 @@ struct MemoryState* MemoryInit(size_t bufSize, char* buf)
     mem->bufSize = bufSize;
     mem->bufNext = sizeof(struct MemoryState);
     mem->bufRoot = 0;
+
+    CreateMutex(&mem->mutex);
 
     return mem;
 }
@@ -35,12 +38,20 @@ char* GetMemory(struct MemoryState* st, size_t numBytes)
 {
     char* buf;
 
+    LockMutex(&st->mutex);
+
     if (!IsMemoryAvailable(st, numBytes))
+    {
+        UnlockMutex(&st->mutex);
         return NULL;
+    }
 
     buf = &st->buf[st->bufNext];
     assert(buf != NULL);
     memset(buf, 0, numBytes);
     st->bufNext += numBytes;
+
+    UnlockMutex(&st->mutex);
+
     return buf;
 }

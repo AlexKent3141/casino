@@ -4,6 +4,7 @@
 #include "node.h"
 #include "time.h"
 #include "thread.h"
+#include "unistd.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 {
@@ -39,15 +40,24 @@ struct CAS_Node* Select(void* cas,
                         struct CAS_Node* n,
                         CAS_DomainState position)
 {
-    struct CAS_Node* selected = n;
+    struct CAS_Node* selected = n, *current;
+
+    LockMutex(&selected->mutex);
 
     while (selected->expanded
         && selected->children != NULL
         && selected->children->numNodes > 0)
     {
+        current = selected;
+
         selected = config->SelectionPolicy(cas, position, selected);
         domain->DoAction(position, selected->action);
+
+        UnlockMutex(&current->mutex);
+        LockMutex(&selected->mutex);
     }
+
+    UnlockMutex(&selected->mutex);
 
     return selected;
 }
@@ -64,6 +74,8 @@ struct CAS_Node* Expand(struct CAS_State* cas,
     int nextActionStage;
     size_t i;
 
+    LockMutex(&n->mutex);
+
     actionList->numActions = 0;
     domain->GetStateActions(position, actionList);
     if (actionList->numActions > 0)
@@ -76,7 +88,10 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 
         n->children = GetNodeList(cas->mem, actionList->numActions);
         if (n->children == NULL)
+        {
+            UnlockMutex(&n->mutex);
             return NULL;
+        }
 
         for (i = 0; i < actionList->numActions; i++)
         {
@@ -91,6 +106,9 @@ struct CAS_Node* Expand(struct CAS_State* cas,
     }
 
     n->expanded = true;
+
+    UnlockMutex(&n->mutex);
+
     return expanded;
 }
 
@@ -121,6 +139,8 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
 {
     do
     {
+        LockMutex(&n->mutex);
+
         /* A node's score is a reflection of how good the move to reach that node
            was i.e. a move for the other player. This is why we check against the
            parent node's player below. */
@@ -132,6 +152,8 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
             else if (n->parent->player == winner)
                 n->wins++;
         }
+
+        UnlockMutex(&n->mutex);
 
         n = n->parent;
 
@@ -198,9 +220,9 @@ struct WorkerData
     struct CAS_SearchConfig* config;
     CAS_DomainState initialPosition;
     int duration;
-    mutex_t* treeLock;
     struct CAS_ActionList* actionList;
     CAS_DomainState workerPosition;
+    bool* stop;
 };
 
 void* SearchWorker(void* data)
@@ -210,7 +232,6 @@ void* SearchWorker(void* data)
     enum CAS_Player winner;
     struct CAS_State* cas = workerData->cas;
     struct CAS_Domain* domain = cas->domain;
-    clock_t startTime = clock();
 
     /* Perform the MCTS procedure while resources remain. */
     /* All access to the tree is synchronised by the shared mutex. */
@@ -227,16 +248,12 @@ void* SearchWorker(void* data)
             cas->root,
             workerData->workerPosition);
 
-        LockMutex(workerData->treeLock);
-
         n = Expand(
             cas,
             cas->domain,
             selected,
             workerData->workerPosition,
             workerData->actionList);
-
-        UnlockMutex(workerData->treeLock);
 
         if (n == NULL)
         {
@@ -251,13 +268,9 @@ void* SearchWorker(void* data)
             workerData->workerPosition,
             workerData->actionList);
 
-        LockMutex(workerData->treeLock);
-
         Backprop(n, winner);
 
-        UnlockMutex(workerData->treeLock);
-
-    } while (TimeSinceStart(startTime) < workerData->duration / 1000.0);
+    } while (!*workerData->stop);
 
     return NULL;
 }
@@ -272,10 +285,6 @@ enum CAS_SearchResult CAS_Search(void* state,
     struct WorkerData* workerData;
     thread_t* tids;
     size_t i;
-    mutex_t treeLock;
-
-    if (CreateMutex(&treeLock) != 0)
-        return CAS_COULD_NOT_INITIALISE_MUTEX;
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
@@ -294,6 +303,8 @@ enum CAS_SearchResult CAS_Search(void* state,
         cas->mem,
         config->numThreads*sizeof(thread_t));
 
+    bool stop = false;
+
     for (i = 0; i < config->numThreads; i++)
     {
         workerData = (struct WorkerData*)GetMemory(
@@ -304,16 +315,19 @@ enum CAS_SearchResult CAS_Search(void* state,
         workerData->config = config;
         workerData->initialPosition = initialPosition;
         workerData->duration = duration,
-        workerData->treeLock = &treeLock,
 
         /* Each worker needs its own action list to populate and domain state
            to work from. */
         workerData->actionList = GetActionList(cas);
         workerData->workerPosition =
             GetMemory(cas->mem, cas->domain->domainStateSize);
+        workerData->stop = &stop;
 
         CreateThread(&tids[i], &SearchWorker, workerData);
     }
+
+    sleep(duration / 1000);
+    stop = true;
 
     /* Wait for all threads to terminate. */
     for (i = 0; i < config->numThreads; i++)
