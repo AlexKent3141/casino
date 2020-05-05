@@ -1,10 +1,12 @@
+#define _DEFAULT_SOURCE
+
 #include "../include/casino.h"
 #include "casino_state.h"
 #include "memory.h"
 #include "node.h"
+#include "errno.h"
 #include "time.h"
 #include "thread.h"
-#include "unistd.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 {
@@ -25,10 +27,6 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
     cas->maxActions = domain->maxActionsPerTurn;
     cas->root = NULL;
     cas->mem = mem;
-
-    /* Seed the PRNG. */
-    cas->prngState[0] = 0xdeadbeefcafebabe;
-    cas->prngState[1] = 0x8badf00dbaada555;
 
     return (void*)cas;
 }
@@ -113,7 +111,7 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 }
 
 /* Play out a random game from the point and score the terminal state. */
-enum CAS_Player Simulate(struct CAS_State* cas,
+enum CAS_Player Simulate(struct PRNGState* st,
                          struct CAS_SearchConfig* config,
                          struct CAS_Domain* domain,
                          CAS_DomainState position,
@@ -122,14 +120,14 @@ enum CAS_Player Simulate(struct CAS_State* cas,
     CAS_Action action;
 
     actionList->numActions = 0;
-    action = config->PlayoutPolicy(cas, domain, position, actionList);
+    action = config->PlayoutPolicy(st, domain, position, actionList);
     while (action != CAS_BAD_ACTION)
     {
         domain->DoAction(position, action);
 
         /* Select which move to make next using the playout policy. */
         actionList->numActions = 0;
-        action = config->PlayoutPolicy(cas, domain, position, actionList);
+        action = config->PlayoutPolicy(st, domain, position, actionList);
     }
 
     return domain->GetScore(position);
@@ -209,9 +207,13 @@ int CAS_GetPV(void* state, int len, CAS_Action* buf)
     return i;
 }
 
-double TimeSinceStart(clock_t start)
+void SleepInMs(int ms)
 {
-    return (double)(clock() - start) / CLOCKS_PER_SEC;
+    struct timespec ts;
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = ms % 1000 * 1000000;
+
+    while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
 }
 
 struct WorkerData
@@ -222,6 +224,7 @@ struct WorkerData
     int duration;
     struct CAS_ActionList* actionList;
     CAS_DomainState workerPosition;
+    PRNGState* prngState;
     bool* stop;
 };
 
@@ -262,7 +265,7 @@ void* SearchWorker(void* data)
         }
 
         winner = Simulate(
-            cas,
+            workerData->prngState,
             workerData->config,
             cas->domain,
             workerData->workerPosition,
@@ -284,7 +287,16 @@ enum CAS_SearchResult CAS_Search(void* state,
     struct CAS_State* cas;
     struct WorkerData* workerData;
     thread_t* tids;
+    PRNGState* prngStates;
     size_t i;
+
+    PRNGState prngInitial =
+    {
+        {
+            0xdeadbeefcafebabe,
+            0x8badf00dbaada555
+        }
+    };
 
     cas = (struct CAS_State*)state;
     if (cas == NULL)
@@ -303,10 +315,18 @@ enum CAS_SearchResult CAS_Search(void* state,
         cas->mem,
         config->numThreads*sizeof(thread_t));
 
+    /* Each worker must have its own PRNG state. */
+    prngStates = (PRNGState*)GetMemory(
+        cas->mem,
+        config->numThreads*sizeof(struct PRNGState));
+
     bool stop = false;
 
     for (i = 0; i < config->numThreads; i++)
     {
+        prngStates[i].x[0] = _Random(&prngInitial);
+        prngStates[i].x[1] = _Random(&prngInitial);
+
         workerData = (struct WorkerData*)GetMemory(
             cas->mem,
             sizeof(struct WorkerData));
@@ -321,12 +341,14 @@ enum CAS_SearchResult CAS_Search(void* state,
         workerData->actionList = GetActionList(cas);
         workerData->workerPosition =
             GetMemory(cas->mem, cas->domain->domainStateSize);
+        workerData->prngState = &prngStates[i];
+
         workerData->stop = &stop;
 
         CreateThread(&tids[i], &SearchWorker, workerData);
     }
 
-    sleep(duration / 1000);
+    SleepInMs(duration);
     stop = true;
 
     /* Wait for all threads to terminate. */

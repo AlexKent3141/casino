@@ -4,14 +4,17 @@
 #include "../include/casino.h"
 #include "memory.h"
 
+typedef struct PRNGState { uint64_t x[2]; } PRNGState;
+
 struct CAS_State
 {
     struct CAS_Domain* domain;
     struct CAS_Node* root;
     int maxActions;
     struct MemoryState* mem;
-    uint64_t prngState[2];
 };
+
+uint64_t _Random(void*);
 
 struct CAS_ActionList* GetActionList(void* st);
 

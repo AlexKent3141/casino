@@ -14,10 +14,15 @@ uint64_t xorshift128plus(uint64_t s[2])
     return s[1] + y;
 }
 
+uint64_t _Random(void* st)
+{
+    struct PRNGState* prngState = (struct PRNGState*)st;
+    return xorshift128plus(prngState->x);
+}
+
 int CAS_Random(void* st, int bound)
 {
-    struct CAS_State* cas = (struct CAS_State*)st;
-    return xorshift128plus(cas->prngState) % bound;
+    return _Random(st) % bound;
 }
 
 #endif /* __CASINO_RANDOM_INCLUDED_H__ */

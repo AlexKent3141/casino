@@ -125,7 +125,7 @@ struct CAS_SearchConfig
      * The playout policy to use.
      * This is used during the simulation stage.
      */
-    CAS_Action (*PlayoutPolicy)(void* cas,
+    CAS_Action (*PlayoutPolicy)(void* prngState,
                                 struct CAS_Domain* domainState,
                                 CAS_DomainState position,
                                 struct CAS_ActionList* list);
@@ -187,7 +187,7 @@ EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
  *  The default playout policy for action selection during playouts.
  * This applies uniform selection over the available actions.
  */
-EXPORT CAS_Action CAS_DefaultPlayoutPolicy(void* cas,
+EXPORT CAS_Action CAS_DefaultPlayoutPolicy(void* prngState,
                                            struct CAS_Domain* domainState,
                                            CAS_DomainState position,
                                            struct CAS_ActionList* list);
@@ -196,7 +196,7 @@ EXPORT CAS_Action CAS_DefaultPlayoutPolicy(void* cas,
  * Get a pseudo-random number on the interval [0, bound).
  * This uses an internal xorshift generator.
  */
-EXPORT int CAS_Random(void* cas, int bound);
+EXPORT int CAS_Random(void* prngState, int bound);
 
 #ifdef __cplusplus
 }
