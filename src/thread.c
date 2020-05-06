@@ -32,3 +32,14 @@ void JoinThread(thread_t* tid)
 {
     pthread_join(*tid, NULL);
 }
+
+int CancelThread(
+    thread_t tid)
+{
+    return pthread_cancel(tid);
+}
+
+void CheckForCancel()
+{
+    pthread_testcancel();
+}

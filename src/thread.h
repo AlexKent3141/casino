@@ -16,4 +16,7 @@ void UnlockMutex(mutex_t*);
 int CreateThread(pthread_t*, void* (*)(void*), void*);
 void JoinThread(pthread_t*);
 
+int CancelThread(pthread_t);
+void CheckForCancel();
+
 #endif /* __CASINO_THREAD_INCLUDED_H__ */

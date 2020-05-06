@@ -207,7 +207,6 @@ struct WorkerData
     CAS_DomainState workerPosition;
     PRNGState* prngState;
     mutex_t* treeLock;
-    bool* stop;
 };
 
 void* SearchWorker(void* threadData)
@@ -263,7 +262,9 @@ void* SearchWorker(void* threadData)
 
         UnlockMutex(data->treeLock);
 
-    } while (!*data->stop);
+        CheckForCancel();
+
+    } while (true);
 
     return NULL;
 }
@@ -321,9 +322,6 @@ enum CAS_SearchResult CAS_Search(void* state,
     if (prngStates == NULL)
         return CAS_INSUFFICIENT_MEMORY;
 
-    /* This boolean is used to flag threads when to stop. */
-    bool stop = false;
-
     for (i = 0; i < config->numThreads; i++)
     {
         prngStates[i].x[0] = _Random(&prngInitial);
@@ -345,17 +343,17 @@ enum CAS_SearchResult CAS_Search(void* state,
             GetMemory(cas->mem, cas->domain->domainStateSize);
         data->prngState = &prngStates[i];
 
-        data->stop = &stop;
-
         CreateThread(&tids[i], &SearchWorker, data);
     }
 
     SleepInMs(duration);
-    stop = true;
 
     /* Wait for all threads to terminate. */
     for (i = 0; i < config->numThreads; i++)
+    {
+        CancelThread(tids[i]);
         JoinThread(&tids[i]);
+    }
 
     return CAS_SUCCESS;
 }
