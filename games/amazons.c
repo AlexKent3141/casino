@@ -489,6 +489,7 @@ int main()
     domain.GetScore = &GetScore;
 
     /* Initialise the search config. */
+    config.numThreads = 4;
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
     config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
 

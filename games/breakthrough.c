@@ -431,7 +431,7 @@ int main()
     domain.GetScore = &GetScore;
 
     /* Initialise the search config. */
-    config.numThreads = 2;
+    config.numThreads = 4;
     config.SelectionPolicy = &BiasedSelectionPolicy;
     config.PlayoutPolicy = &BiasedPlayoutPolicy;
 

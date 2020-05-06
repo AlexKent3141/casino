@@ -1,7 +1,6 @@
 #include "memory.h"
 #include "assert.h"
 #include "string.h"
-#include "thread.h"
 
 struct MemoryState* MemoryInit(size_t bufSize, char* buf)
 {
@@ -11,12 +10,13 @@ struct MemoryState* MemoryInit(size_t bufSize, char* buf)
         return NULL;
 
     mem = (struct MemoryState*)&buf[0];
+
+    CreateMutex(&mem->mutex);
+
     mem->buf = buf;
     mem->bufSize = bufSize;
     mem->bufNext = sizeof(struct MemoryState);
     mem->bufRoot = 0;
-
-    CreateMutex(&mem->mutex);
 
     return mem;
 }

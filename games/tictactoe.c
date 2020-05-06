@@ -215,6 +215,7 @@ int main()
 
     /* Initialise the search config. */
     /* In this case we just use the defaults. */
+    config.numThreads = 4;
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
     config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
 
