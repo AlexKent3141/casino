@@ -6,7 +6,6 @@
 #include "node.h"
 #include "errno.h"
 #include "time.h"
-#include "thread.h"
 
 void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 {
@@ -206,7 +205,7 @@ struct WorkerData
     struct CAS_ActionList* actionList;
     CAS_DomainState workerPosition;
     PRNGState* prngState;
-    mutex_t* treeLock;
+    pthread_mutex_t* treeLock;
 };
 
 void* SearchWorker(void* threadData)
@@ -225,7 +224,7 @@ void* SearchWorker(void* threadData)
             data->initialPosition,
             data->workerPosition);
 
-        LockMutex(data->treeLock);
+        pthread_mutex_lock(data->treeLock);
 
         selected = Select(
             cas,
@@ -241,7 +240,7 @@ void* SearchWorker(void* threadData)
             data->workerPosition,
             data->actionList);
 
-        UnlockMutex(data->treeLock);
+        pthread_mutex_unlock(data->treeLock);
 
         if (n == NULL)
         {
@@ -256,13 +255,13 @@ void* SearchWorker(void* threadData)
             data->workerPosition,
             data->actionList);
 
-        LockMutex(data->treeLock);
+        pthread_mutex_lock(data->treeLock);
 
         Backprop(n, winner);
 
-        UnlockMutex(data->treeLock);
+        pthread_mutex_unlock(data->treeLock);
 
-        CheckForCancel();
+        pthread_testcancel();
 
     } while (true);
 
@@ -277,9 +276,9 @@ enum CAS_SearchResult CAS_Search(void* state,
 {
     struct CAS_State* cas;
     struct WorkerData* data;
-    thread_t* tids;
     PRNGState* prngStates;
-    mutex_t treeLock;
+    pthread_t* tids;
+    pthread_mutex_t treeLock;
     size_t i;
 
     PRNGState prngInitial =
@@ -297,7 +296,7 @@ enum CAS_SearchResult CAS_Search(void* state,
     ResetTree(cas->mem);
 
     /* Initialise a mutex to protect access to the tree. */
-    if (CreateMutex(&treeLock) != 0)
+    if (pthread_mutex_init(&treeLock, NULL) != 0)
         return CAS_COULD_NOT_INITIALISE_MUTEX;
 
     /* Initialise the root node. */
@@ -307,9 +306,9 @@ enum CAS_SearchResult CAS_Search(void* state,
         return CAS_INSUFFICIENT_MEMORY;
 
     /* Initialise and kick off each of the worker threads. */
-    tids = (thread_t*)GetMemory(
+    tids = (pthread_t*)GetMemory(
         cas->mem,
-        config->numThreads*sizeof(thread_t));
+        config->numThreads*sizeof(pthread_t));
 
     if (tids == NULL)
         return CAS_INSUFFICIENT_MEMORY;
@@ -343,7 +342,7 @@ enum CAS_SearchResult CAS_Search(void* state,
             GetMemory(cas->mem, cas->domain->domainStateSize);
         data->prngState = &prngStates[i];
 
-        CreateThread(&tids[i], &SearchWorker, data);
+        pthread_create(&tids[i], NULL, &SearchWorker, data);
     }
 
     SleepInMs(duration);
@@ -351,9 +350,11 @@ enum CAS_SearchResult CAS_Search(void* state,
     /* Wait for all threads to terminate. */
     for (i = 0; i < config->numThreads; i++)
     {
-        CancelThread(tids[i]);
-        JoinThread(&tids[i]);
+        pthread_cancel(tids[i]);
+        pthread_join(tids[i], NULL);
     }
+
+    pthread_mutex_destroy(&treeLock);
 
     return CAS_SUCCESS;
 }

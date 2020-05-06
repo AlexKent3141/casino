@@ -2,9 +2,9 @@
 #define __CASINO_MEMORY_INCLUDED_H__
 
 #include "../include/casino.h"
+#include "pthread.h"
 #include "stdlib.h"
 #include "stdbool.h"
-#include "thread.h"
 
 struct MemoryState
 {
@@ -12,7 +12,7 @@ struct MemoryState
     size_t bufSize; /* The size of the buffer. */
     size_t bufNext; /* The next available (unused) position in the buffer. */
     size_t bufRoot; /* The position of the latest root node. */
-    mutex_t mutex;
+    pthread_mutex_t mutex;
 };
 
 struct MemoryState* MemoryInit(size_t bufSize, char* buf);
