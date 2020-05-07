@@ -2,7 +2,9 @@
 #include "assert.h"
 #include "string.h"
 
-struct MemoryState* MemoryInit(size_t bufSize, char* buf)
+struct MemoryState* MemoryInit(
+    size_t bufSize,
+    char* buf)
 {
     struct MemoryState* mem;
 
@@ -21,7 +23,8 @@ struct MemoryState* MemoryInit(size_t bufSize, char* buf)
     return mem;
 }
 
-void ResetTree(struct MemoryState* st)
+void ResetTree(
+    struct MemoryState* st)
 {
     if (st->bufRoot != 0)
     {
@@ -29,12 +32,16 @@ void ResetTree(struct MemoryState* st)
     }
 }
 
-bool IsMemoryAvailable(struct MemoryState* st, size_t numBytes)
+bool IsMemoryAvailable(
+    struct MemoryState* st,
+    size_t numBytes)
 {
     return numBytes <= st->bufSize - st->bufNext;
 }
 
-char* GetMemory(struct MemoryState* st, size_t numBytes)
+char* GetMemory(
+    struct MemoryState* st,
+    size_t numBytes)
 {
     char* buf;
 

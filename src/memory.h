@@ -15,19 +15,25 @@ struct MemoryState
     pthread_mutex_t mutex;
 };
 
-struct MemoryState* MemoryInit(size_t bufSize, char* buf);
+struct MemoryState* MemoryInit(
+    size_t bufSize,
+    char* buf);
 
 /*
  * This method is used to reset the tree between searches.
  */
 void ResetTree(struct MemoryState* st);
 
-bool IsMemoryAvailable(struct MemoryState* st, size_t numBytes);
+bool IsMemoryAvailable(
+    struct MemoryState* st,
+    size_t numBytes);
 
 /*
  * Get a block of memory of the required size.
  * If there isn't enough memory available return NULL.
  */
-char* GetMemory(struct MemoryState* st, size_t numBytes);
+char* GetMemory(
+    struct MemoryState* st,
+    size_t numBytes);
 
 #endif /* __CASINO_MEMORY_INCLUDED_H__ */

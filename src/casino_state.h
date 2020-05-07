@@ -14,7 +14,7 @@ struct CAS_State
     struct MemoryState* mem;
 };
 
-uint64_t _Random(void*);
+uint64_t Random(void*);
 
 struct CAS_ActionList* GetActionList(void* st);
 

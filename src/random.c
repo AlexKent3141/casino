@@ -14,7 +14,8 @@ uint64_t xorshift128plus(uint64_t s[2])
     return s[1] + y;
 }
 
-uint64_t _Random(void* st)
+/* Internal function. */
+uint64_t Random(void* st)
 {
     struct PRNGState* prngState = (struct PRNGState*)st;
     return xorshift128plus(prngState->x);
@@ -22,7 +23,7 @@ uint64_t _Random(void* st)
 
 int CAS_Random(void* st, int bound)
 {
-    return _Random(st) % bound;
+    return Random(st) % bound;
 }
 
 #endif /* __CASINO_RANDOM_INCLUDED_H__ */

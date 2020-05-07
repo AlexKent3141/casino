@@ -90,20 +90,27 @@ struct CAS_Domain
     size_t domainStateSize;
 
     /* Create a copy of an existing domain state. */
-    void (*CopyState)(CAS_DomainState, char*);
+    void (*CopyState)(
+        CAS_DomainState,
+        char*);
 
     /* Get a list of all available actions in this domain state. */
-    void (*GetStateActions)(CAS_DomainState, struct CAS_ActionList*);
+    void (*GetStateActions)(
+        CAS_DomainState,
+        struct CAS_ActionList*);
 
     /* Apply the specified action to the domain state. */
-    void (*DoAction)(CAS_DomainState, CAS_Action);
+    void (*DoAction)(
+        CAS_DomainState,
+        CAS_Action);
 
     /*
      * Determine the result in the specified domain state.
      * This will only be called if `GetStateActions` did not return any actions,
      * which is interpreted as the domain reaching a terminal state.
      */
-    enum CAS_Player (*GetScore)(CAS_DomainState);
+    enum CAS_Player (*GetScore)(
+        CAS_DomainState);
 };
 
 struct CAS_SearchConfig
@@ -114,18 +121,20 @@ struct CAS_SearchConfig
      * The selection policy to use.
      * This is used to select which node to expand next in the tree.
      */
-    struct CAS_Node* (*SelectionPolicy)(void* cas,
-                                        CAS_DomainState position,
-                                        struct CAS_Node* parent);
+    struct CAS_Node* (*SelectionPolicy)(
+        void* cas,
+        CAS_DomainState position,
+        struct CAS_Node* parent);
 
     /*
      * The playout policy to use.
      * This is used during the simulation stage.
      */
-    CAS_Action (*PlayoutPolicy)(void* prngState,
-                                struct CAS_Domain* domainState,
-                                CAS_DomainState position,
-                                struct CAS_ActionList* list);
+    CAS_Action (*PlayoutPolicy)(
+        void* prngState,
+        struct CAS_Domain* domainState,
+        CAS_DomainState position,
+        struct CAS_ActionList* list);
 };
 
 /*
@@ -135,48 +144,64 @@ struct CAS_SearchConfig
  * If Casino runs out of memory while searching then it will return the best
  * move so far.
  */
-EXPORT void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf);
+EXPORT void* CAS_Init(
+    struct CAS_Domain* domain,
+    size_t bufSize,
+    char* buf);
 
 /* Search the current domain state. */
-EXPORT enum CAS_SearchResult CAS_Search(void* cas,
-                                        struct CAS_SearchConfig* config,
-                                        CAS_DomainState initialPosition,
-                                        enum CAS_Player player,
-                                        int ms);
+EXPORT enum CAS_SearchResult CAS_Search(
+    void* cas,
+    struct CAS_SearchConfig* config,
+    CAS_DomainState initialPosition,
+    enum CAS_Player player,
+    int ms);
 
 /* Get statistics for the best action in the most recent search. */
-EXPORT void CAS_GetBestAction(void* cas, struct CAS_ActionStats* stats);
+EXPORT void CAS_GetBestAction(
+    void* cas,
+    struct CAS_ActionStats* stats);
 
 /* Get the PV for the most recent search.
  * The return value is the depth of the PV which will be less than or equal to
  * the buffer size. */
-EXPORT int CAS_GetPV(void* cas,
-                     int len,
-                     CAS_Action* buf);
+EXPORT int CAS_GetPV(
+    void* cas,
+    int len,
+    CAS_Action* buf);
 
 /* Add an action to an action list. */
-EXPORT void CAS_AddAction(struct CAS_ActionList* list, CAS_Action action);
+EXPORT void CAS_AddAction(
+    struct CAS_ActionList* list,
+    CAS_Action action);
 
 /* Built-in selection policy methods. */
 
-EXPORT double CAS_WinRate(struct CAS_Node* node);
-EXPORT double CAS_UCBExploration(struct CAS_Node* node, double explorationFactor);
+EXPORT double CAS_WinRate(
+    struct CAS_Node* node);
+
+EXPORT double CAS_UCBExploration(
+    struct CAS_Node* node,
+    double explorationFactor);
 
 /*
  * Select the node with the highest score according to the scoring function.
  */
-EXPORT struct CAS_Node* CAS_SelectByScore(struct CAS_Node* parent,
-                                          CAS_DomainState position,
-                                          double (*SelectScore)(CAS_DomainState,
-                                                                struct CAS_Node*));
+EXPORT struct CAS_Node* CAS_SelectByScore(
+    struct CAS_Node* parent,
+    CAS_DomainState position,
+    double (*SelectScore)(
+        CAS_DomainState,
+        struct CAS_Node*));
 
 /*
  * The default selection policy for nodes during selection.
  * This applies the UCB formula with exploration constant c = sqrt(2).
  */
-EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
-                                                   CAS_DomainState position,
-                                                   struct CAS_Node* node);
+EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(
+    void* cas,
+    CAS_DomainState position,
+    struct CAS_Node* node);
 
 /* Built-in playout policy methods. */
 
@@ -184,16 +209,19 @@ EXPORT struct CAS_Node* CAS_DefaultSelectionPolicy(void* cas,
  *  The default playout policy for action selection during playouts.
  * This applies uniform selection over the available actions.
  */
-EXPORT CAS_Action CAS_DefaultPlayoutPolicy(void* prngState,
-                                           struct CAS_Domain* domainState,
-                                           CAS_DomainState position,
-                                           struct CAS_ActionList* list);
+EXPORT CAS_Action CAS_DefaultPlayoutPolicy(
+    void* prngState,
+    struct CAS_Domain* domainState,
+    CAS_DomainState position,
+    struct CAS_ActionList* list);
 
 /*
  * Get a pseudo-random number on the interval [0, bound).
  * This uses an internal xorshift generator.
  */
-EXPORT int CAS_Random(void* prngState, int bound);
+EXPORT int CAS_Random(
+    void* prngState,
+    int bound);
 
 #ifdef __cplusplus
 }

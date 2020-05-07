@@ -7,7 +7,10 @@
 #include "errno.h"
 #include "time.h"
 
-void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
+void* CAS_Init(
+    struct CAS_Domain* domain,
+    size_t bufSize,
+    char* buf)
 {
     struct MemoryState* mem;
     struct CAS_State* cas;
@@ -18,7 +21,10 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
         return NULL;
 
     /* Initialise the internal state. */
-    cas = (struct CAS_State*)GetMemory(mem, sizeof(struct CAS_State));
+    cas = (struct CAS_State*)GetMemory(
+        mem,
+        sizeof(struct CAS_State));
+
     if (cas == NULL)
         return NULL;
 
@@ -31,11 +37,12 @@ void* CAS_Init(struct CAS_Domain* domain, size_t bufSize, char* buf)
 }
 
 /* Keep selecting child nodes until a leaf node (or a terminal node) is reached. */
-struct CAS_Node* Select(void* cas,
-                        struct CAS_SearchConfig* config,
-                        struct CAS_Domain* domain,
-                        struct CAS_Node* n,
-                        CAS_DomainState position)
+struct CAS_Node* Select(
+    void* cas,
+    struct CAS_SearchConfig* config,
+    struct CAS_Domain* domain,
+    struct CAS_Node* n,
+    CAS_DomainState position)
 {
     struct CAS_Node* selected = n;
 
@@ -51,11 +58,12 @@ struct CAS_Node* Select(void* cas,
 }
 
 /* Add nodes for each of the actions available from n and pick the first. */
-struct CAS_Node* Expand(struct CAS_State* cas,
-                        struct CAS_Domain* domain,
-                        struct CAS_Node* n,
-                        CAS_DomainState position,
-                        struct CAS_ActionList* actionList)
+struct CAS_Node* Expand(
+    struct CAS_State* cas,
+    struct CAS_Domain* domain,
+    struct CAS_Node* n,
+    CAS_DomainState position,
+    struct CAS_ActionList* actionList)
 {
     struct CAS_Node* expanded = n;
     enum CAS_Player nextPlayer;
@@ -80,11 +88,12 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 
         for (i = 0; i < actionList->numActions; i++)
         {
-            AddNode(n->children,
-                    n,
-                    nextPlayer,
-                    nextActionStage,
-                    actionList->actions[i]);
+            AddNode(
+                n->children,
+                n,
+                nextPlayer,
+                nextActionStage,
+                actionList->actions[i]);
         }
 
         expanded = &n->children->nodes[0];
@@ -96,11 +105,12 @@ struct CAS_Node* Expand(struct CAS_State* cas,
 }
 
 /* Play out a random game from the point and score the terminal state. */
-enum CAS_Player Simulate(struct PRNGState* st,
-                         struct CAS_SearchConfig* config,
-                         struct CAS_Domain* domain,
-                         CAS_DomainState position,
-                         struct CAS_ActionList* actionList)
+enum CAS_Player Simulate(
+    struct PRNGState* st,
+    struct CAS_SearchConfig* config,
+    struct CAS_Domain* domain,
+    CAS_DomainState position,
+    struct CAS_ActionList* actionList)
 {
     CAS_Action action;
 
@@ -118,7 +128,9 @@ enum CAS_Player Simulate(struct PRNGState* st,
     return domain->GetScore(position);
 }
 
-void Backprop(struct CAS_Node* n, enum CAS_Player winner)
+void Backprop(
+    struct CAS_Node* n,
+    enum CAS_Player winner)
 {
     do
     {
@@ -139,7 +151,8 @@ void Backprop(struct CAS_Node* n, enum CAS_Player winner)
     } while (n != NULL);
 }
 
-struct CAS_Node* GetChildWithMostPlayouts(struct CAS_Node* parent)
+struct CAS_Node* GetChildWithMostPlayouts(
+    struct CAS_Node* parent)
 {
     struct CAS_Node* bestNode = NULL, *currentNode;
     int mostPlayouts = 0;
@@ -159,7 +172,9 @@ struct CAS_Node* GetChildWithMostPlayouts(struct CAS_Node* parent)
 }
 
 /* Parse the tree to find the best action. */
-void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
+void CAS_GetBestAction(
+    void* state,
+    struct CAS_ActionStats* stats)
 {
     struct CAS_State* cas = (struct CAS_State*)state;
     struct CAS_Node* bestNode = GetChildWithMostPlayouts(cas->root);
@@ -173,7 +188,9 @@ void CAS_GetBestAction(void* state, struct CAS_ActionStats* stats)
 }
 
 /* Parse the tree to find the PV up to maximum depth `len`. */
-int CAS_GetPV(void* state, int len, CAS_Action* buf)
+int CAS_GetPV(
+    void* state,
+    int len, CAS_Action* buf)
 {
     struct CAS_State* cas = (struct CAS_State*)state;
     struct CAS_Node* bestNode = GetChildWithMostPlayouts(cas->root);
@@ -268,11 +285,12 @@ void* SearchWorker(void* threadData)
     return NULL;
 }
 
-enum CAS_SearchResult CAS_Search(void* state,   
-                                 struct CAS_SearchConfig* config,
-                                 CAS_DomainState initialPosition,
-                                 enum CAS_Player player,
-                                 int duration)
+enum CAS_SearchResult CAS_Search(
+    void* state,
+    struct CAS_SearchConfig* config,
+    CAS_DomainState initialPosition,
+    enum CAS_Player player,
+    int duration)
 {
     struct CAS_State* cas;
     struct WorkerData* data;
@@ -323,8 +341,8 @@ enum CAS_SearchResult CAS_Search(void* state,
 
     for (i = 0; i < config->numThreads; i++)
     {
-        prngStates[i].x[0] = _Random(&prngInitial);
-        prngStates[i].x[1] = _Random(&prngInitial);
+        prngStates[i].x[0] = Random(&prngInitial);
+        prngStates[i].x[1] = Random(&prngInitial);
 
         data = (struct WorkerData*)GetMemory(
             cas->mem,
