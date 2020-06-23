@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-typedef uint16_t CAS_Action;
+typedef uint64_t CAS_Action;
 typedef void* CAS_DomainState;
 
 static const CAS_Action CAS_BAD_ACTION = ~(CAS_Action)0;
