@@ -1,6 +1,3 @@
-#ifndef __CASINO_RANDOM_INCLUDED_H__
-#define __CASINO_RANDOM_INCLUDED_H__
-
 #include "../include/casino.h"
 #include "casino_state.h"
 
@@ -25,5 +22,3 @@ int CAS_Random(void* st, int bound)
 {
     return Random(st) % bound;
 }
-
-#endif /* __CASINO_RANDOM_INCLUDED_H__ */

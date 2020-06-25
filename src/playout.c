@@ -1,6 +1,3 @@
-#ifndef __CASINO_PLAYOUT_INCLUDED_H__
-#define __CASINO_PLAYOUT_INCLUDED_H__
-
 #include "../include/casino.h"
 #include "assert.h"
 
@@ -22,5 +19,3 @@ CAS_Action CAS_DefaultPlayoutPolicy(
 
     return action;
 }
-
-#endif /* __CASINO_PLAYOUT_INCLUDED_H__ */
