@@ -86,13 +86,10 @@ struct CAS_Domain
      */
     int actionStages;
 
-    /* The size of the domain state. */
-    size_t domainStateSize;
-
     /* Create a copy of an existing domain state. */
     void (*CopyState)(
-        CAS_DomainState,
-        char*);
+        CAS_DomainState source,
+        CAS_DomainState target);
 
     /* Get a list of all available actions in this domain state. */
     void (*GetStateActions)(
@@ -154,6 +151,7 @@ EXPORT enum CAS_SearchResult CAS_Search(
     void* cas,
     struct CAS_SearchConfig* config,
     CAS_DomainState initialPosition,
+    CAS_DomainState* workerPositions,
     enum CAS_Player player,
     int ms);
 
