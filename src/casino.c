@@ -103,6 +103,7 @@ enum CAS_SearchResult CAS_Search(
     void* state,
     struct CAS_SearchConfig* config,
     CAS_DomainState initialPosition,
+    CAS_DomainState* workerPositions,
     enum CAS_Player player,
     int duration)
 {
@@ -170,8 +171,7 @@ enum CAS_SearchResult CAS_Search(
         /* Each worker needs its own action list to populate and domain state
            to work from. */
         data->actionList = GetActionList(cas);
-        data->workerPosition =
-            GetMemory(cas->mem, cas->domain->domainStateSize);
+        data->workerPosition = workerPositions[i];
         data->prngState = &prngStates[i];
 
         pthread_create(&tids[i], NULL, &SearchWorker, data);
