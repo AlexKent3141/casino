@@ -171,6 +171,9 @@ enum CAS_SearchResult CAS_Search(
         /* Each worker needs its own action list to populate and domain state
            to work from. */
         data->actionList = GetActionList(cas);
+        if (data->actionList == NULL)
+            return CAS_INSUFFICIENT_MEMORY;
+
         data->workerPosition = workerPositions[i];
         data->prngState = &prngStates[i];
 
