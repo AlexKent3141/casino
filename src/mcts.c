@@ -96,6 +96,8 @@ enum CAS_Player Simulate(
         /* Select which move to make next using the playout policy. */
         actionList->numActions = 0;
         action = config->PlayoutPolicy(st, domain, position, actionList);
+
+        ++depth;
     }
 
     return domain->GetScore(position);
