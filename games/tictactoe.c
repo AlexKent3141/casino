@@ -42,11 +42,11 @@ enum CAS_Player CheckForWinner(struct TTTState* st)
         return CAS_NONE;
 }
 
-void CopyState(CAS_DomainState st, char* buf)
+void CopyState(CAS_DomainState source, CAS_DomainState target)
 {
     struct TTTState* copy, *orig;
-    orig = (struct TTTState*)st;
-    copy = (struct TTTState*)buf;
+    orig = (struct TTTState*)source;
+    copy = (struct TTTState*)target;
     assert(copy != NULL);
     memcpy(copy->pieces, orig->pieces, 9*sizeof(enum CAS_Player));
     copy->player = orig->player;
@@ -150,18 +150,26 @@ CAS_Action GetUserAction()
 void PlayGame(void* casState, struct CAS_SearchConfig* config)
 {
     struct TTTState* tttState;
+    struct TTTState** workerStates;
     struct CAS_ActionStats* stats;
     enum CAS_SearchResult res;
     CAS_Action userAction;
+    int i;
 
     tttState = MakeState();
+
+    workerStates = (struct TTTState**)malloc(4*sizeof(struct TTTState*));
+    for (i = 0; i < 4; i++)
+        workerStates[i] = MakeState();
+
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
 
     while (!IsGameOver(tttState))
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, tttState, CAS_P1, 500);
+
+        res = CAS_Search(casState, config, tttState, (void**)workerStates, CAS_P1, 500);
         if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
@@ -172,7 +180,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
         CAS_GetBestAction(casState, stats);
         printf("Action stats:\n"
-               "Best move: %d\n"
+               "Best move: %ld\n"
                "Win rate: %f\n"
                "Playouts: %d\n",
                stats->action, stats->winRate, stats->playouts);
@@ -193,6 +201,11 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
     free(stats);
     free(tttState);
+
+    for (i = 0; i < 4; i++)
+        free(workerStates[i]);
+
+    free(workerStates);
 }
 
 int main()
@@ -207,7 +220,6 @@ int main()
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
     domain.actionStages = 1;
-    domain.domainStateSize = sizeof(struct TTTState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
     domain.DoAction = &DoAction;
@@ -218,6 +230,7 @@ int main()
     config.numThreads = 4;
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
     config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
+    config.StopPlayout = &CAS_DefaultStopPlayoutCriterion;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);

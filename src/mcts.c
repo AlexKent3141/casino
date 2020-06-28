@@ -68,6 +68,14 @@ struct CAS_Node* Expand(
     return expanded;
 }
 
+bool CAS_DefaultStopPlayoutCriterion(
+    CAS_Action previousAction,
+    int playoutDepth)
+{
+    (void)playoutDepth;
+    return previousAction == CAS_BAD_ACTION;
+}
+
 /* Play out a random game from the point and score the terminal state. */
 enum CAS_Player Simulate(
     struct PRNGState* st,
@@ -77,10 +85,11 @@ enum CAS_Player Simulate(
     struct CAS_ActionList* actionList)
 {
     CAS_Action action;
+    int depth = 0;
 
     actionList->numActions = 0;
     action = config->PlayoutPolicy(st, domain, position, actionList);
-    while (action != CAS_BAD_ACTION)
+    while (!config->StopPlayout(action, depth))
     {
         domain->DoAction(position, action);
 

@@ -132,6 +132,15 @@ struct CAS_SearchConfig
         struct CAS_Domain* domainState,
         CAS_DomainState position,
         struct CAS_ActionList* list);
+
+    /*
+     * This is the criterion that is used to terminate a playout.
+     * The default implementation just terminates when the end of the game is
+     * reached i.e. previousAction is CAS_BAD_ACTION.
+     */
+    bool (*StopPlayout)(
+        CAS_Action previousAction,
+        int playoutDepth);
 };
 
 /*
@@ -191,6 +200,14 @@ EXPORT struct CAS_Node* CAS_SelectByScore(
     double (*SelectScore)(
         CAS_DomainState,
         struct CAS_Node*));
+
+/*
+ * This playout termination criterion is used when we want to play out the game
+ * to completion and then score the game state.
+ */
+bool CAS_DefaultStopPlayoutCriterion(
+    CAS_Action previousAction,
+    int playoutDepth);
 
 /*
  * The default selection policy for nodes during selection.
