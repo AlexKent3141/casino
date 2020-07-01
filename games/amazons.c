@@ -172,18 +172,18 @@ struct AmazonsState* MakeState()
 }
 
 /* From here on these are the functions required by Casino. */
-void CopyState(CAS_DomainState st, char* buf)
+void CopyState(CAS_DomainState source, CAS_DomainState target)
 {
-    struct AmazonsState* orig = (struct AmazonsState*)st;
-    struct AmazonsState* copy = (struct AmazonsState*)buf;
+    struct AmazonsState* src = (struct AmazonsState*)source;
+    struct AmazonsState* dst = (struct AmazonsState*)target;
 
-    copy->player = orig->player;
-    copy->stage = orig->stage;
-    copy->selectedPieceIndex = orig->selectedPieceIndex;
-    copy->pieceTargetLoc = orig->pieceTargetLoc;
-    memcpy(copy->p1PieceLocs, orig->p1PieceLocs, NUM_PIECES*sizeof(int));
-    memcpy(copy->p2PieceLocs, orig->p2PieceLocs, NUM_PIECES*sizeof(int));
-    memcpy(copy->obstructions, orig->obstructions, PADDED_BOARD_SIZE*sizeof(int));
+    dst->player = src->player;
+    dst->stage = src->stage;
+    dst->selectedPieceIndex = src->selectedPieceIndex;
+    dst->pieceTargetLoc = src->pieceTargetLoc;
+    memcpy(dst->p1PieceLocs, src->p1PieceLocs, NUM_PIECES*sizeof(int));
+    memcpy(dst->p2PieceLocs, src->p2PieceLocs, NUM_PIECES*sizeof(int));
+    memcpy(dst->obstructions, src->obstructions, PADDED_BOARD_SIZE*sizeof(int));
 }
 
 bool Unobstructed(struct AmazonsState* board, int loc)
@@ -411,6 +411,7 @@ void GetUserMove(struct AmazonsState* board, CAS_Action* actions)
 void PlayGame(void* casState, struct CAS_SearchConfig* config)
 {
     struct AmazonsState* amazonsState;
+    struct AmazonsState** workerStates;
     struct CAS_ActionStats* stats;
     enum CAS_SearchResult res;
     CAS_Action* pv = (CAS_Action*)malloc(NUM_STAGES*sizeof(CAS_Action));
@@ -418,13 +419,17 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
     amazonsState = MakeState();
 
+    workerStates = (struct AmazonsState**)malloc(4*sizeof(struct AmazonsState*));
+    for (i = 0; i < 4; i++)
+        workerStates[i] = MakeState();
+
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
 
     while (GetScore(amazonsState) == CAS_NONE)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, amazonsState, CAS_P1, 500);
+        res = CAS_Search(casState, config, amazonsState, (void**)workerStates, CAS_P1, 5000);
         if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
@@ -468,6 +473,11 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     free(pv);
     free(stats);
     free(amazonsState);
+
+    for (i = 0; i < 4; i++)
+        free(workerStates[i]);
+
+    free(workerStates);
 }
 
 int main()
@@ -482,7 +492,6 @@ int main()
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
     domain.actionStages = NUM_STAGES;
-    domain.domainStateSize = sizeof(struct AmazonsState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
     domain.DoAction = &DoAction;
@@ -492,6 +501,7 @@ int main()
     config.numThreads = 4;
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
     config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
+    config.StopPlayout = &CAS_DefaultStopPlayoutCriterion;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);
