@@ -151,12 +151,20 @@ void* SearchWorker(void* threadData)
             cas->root,
             data->workerPosition);
 
-        n = Expand(
-            cas,
-            cas->domain,
-            selected,
-            data->workerPosition,
-            data->actionList);
+        /* Only expand a node if its parent has been fully expanded. */
+        if (selected->parent == NULL || FullyExpanded(selected->parent))
+        {
+            n = Expand(
+                cas,
+                cas->domain,
+                selected,
+                data->workerPosition,
+                data->actionList);
+        }
+        else
+        {
+            n = selected;
+        }
 
         pthread_mutex_unlock(data->treeLock);
 

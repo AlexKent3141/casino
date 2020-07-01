@@ -78,3 +78,23 @@ void AddNode(
     n->draws = 0;
     n->playouts = 0;
 }
+
+/* Check that all child nodes have at least one playout. */
+bool FullyExpanded(
+    struct CAS_Node* n)
+{
+    struct CAS_NodeList* list;
+    bool expanded = true;
+    size_t i;
+
+    assert(n != NULL && n->children != NULL);
+
+    list = n->children;
+
+    for (i = 0; i < list->numNodes && expanded; i++)
+    {
+        expanded = list->nodes[i].playouts > 0;
+    }
+
+    return expanded;
+}
