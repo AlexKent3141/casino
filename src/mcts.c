@@ -24,6 +24,7 @@ struct CAS_Node* Select(
 /* Add nodes for each of the actions available from n and pick the first. */
 struct CAS_Node* Expand(
     struct CAS_State* cas,
+    struct CAS_SearchConfig* config,
     struct CAS_Domain* domain,
     struct CAS_Node* n,
     CAS_DomainState position,
@@ -60,7 +61,9 @@ struct CAS_Node* Expand(
                 actionList->actions[i]);
         }
 
-        expanded = &n->children->nodes[0];
+        config->PrioritiseExpandedNodesPolicy(position, n->children);
+
+        expanded = config->SelectionPolicy(cas, position, n);
     }
 
     n->expanded = true;
@@ -74,6 +77,14 @@ bool CAS_DefaultStopPlayoutCriterion(
 {
     (void)playoutDepth;
     return previousAction == CAS_BAD_ACTION;
+}
+
+void CAS_DefaultPrioritiseExpandedNodesPolicy(
+    CAS_DomainState previousPosition,
+    struct CAS_NodeList* childNodes)
+{
+    (void)previousPosition;
+    (void)childNodes;
 }
 
 /* Play out a random game from the point and score the terminal state. */
@@ -156,6 +167,7 @@ void* SearchWorker(void* threadData)
         {
             n = Expand(
                 cas,
+                data->config,
                 cas->domain,
                 selected,
                 data->workerPosition,

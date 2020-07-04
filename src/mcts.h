@@ -16,6 +16,7 @@ struct CAS_Node* Select(
 /* Add nodes for each of the actions available from n and pick the first. */
 struct CAS_Node* Expand(
     struct CAS_State* cas,
+    struct CAS_SearchConfig* config,
     struct CAS_Domain* domain,
     struct CAS_Node* n,
     CAS_DomainState position,

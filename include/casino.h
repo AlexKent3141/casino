@@ -141,6 +141,15 @@ struct CAS_SearchConfig
     bool (*StopPlayout)(
         CAS_Action previousAction,
         int playoutDepth);
+
+    /*
+     * This method is called when a node is expanded and its children are
+     * generated. The idea is to assign the child nodes priorities based on
+     * how promising they look accordingly to domain specific heuristics.
+     */
+    void (*PrioritiseExpandedNodesPolicy)(
+        CAS_DomainState domainState,
+        struct CAS_NodeList* nodes);
 };
 
 /*
@@ -208,6 +217,13 @@ EXPORT struct CAS_Node* CAS_SelectByScore(
 bool CAS_DefaultStopPlayoutCriterion(
     CAS_Action previousAction,
     int playoutDepth);
+
+/*
+ * This policy for prioritising expanded nodes does not have any effect.
+ */
+void CAS_DefaultPrioritiseExpandedNodesPolicy(
+    CAS_DomainState previousPosition,
+    struct CAS_NodeList* childNodes);
 
 /*
  * The default selection policy for nodes during selection.
