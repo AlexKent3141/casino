@@ -214,14 +214,14 @@ EXPORT struct CAS_Node* CAS_SelectByScore(
  * This playout termination criterion is used when we want to play out the game
  * to completion and then score the game state.
  */
-bool CAS_DefaultStopPlayoutCriterion(
+EXPORT bool CAS_DefaultStopPlayoutCriterion(
     CAS_Action previousAction,
     int playoutDepth);
 
 /*
  * This policy for prioritising expanded nodes does not have any effect.
  */
-void CAS_DefaultPrioritiseExpandedNodesPolicy(
+EXPORT void CAS_DefaultPrioritiseExpandedNodesPolicy(
     CAS_DomainState previousPosition,
     struct CAS_NodeList* childNodes);
 
