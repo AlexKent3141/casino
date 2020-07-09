@@ -1,8 +1,10 @@
 #include "../include/casino.h"
+#include "float.h"
 #include "math.h"
 
 double CAS_WinRate(struct CAS_Node* n)
 {
+    if (n->playouts == 0) return 0;
 	return (n->wins + 0.5*n->draws) / n->playouts;
 }
 
@@ -10,6 +12,7 @@ double CAS_UCBExploration(
     struct CAS_Node* n,
     double explorationFactor)
 {
+    if (n->parent->playouts == 0 || n->playouts == 0) return 0;
 	return explorationFactor * sqrt(log(n->parent->playouts) / n->playouts);
 }
 
@@ -21,7 +24,7 @@ struct CAS_Node* CAS_SelectByScore(
         struct CAS_Node*))
 {
     struct CAS_Node* selected = NULL, *current;
-    double score, bestScore = 0;
+    double score, bestScore = -DBL_MAX;
     size_t i;
 
     for (i = 0; i < parent->children->numNodes; i++)
