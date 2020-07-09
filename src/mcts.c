@@ -163,7 +163,8 @@ void* SearchWorker(void* threadData)
             data->workerPosition);
 
         /* Only expand a node if its parent has been fully expanded. */
-        if (selected->parent == NULL || FullyExpanded(selected->parent))
+        if (selected->parent == NULL
+            || data->config->ExpansionPolicy(selected->parent))
         {
             n = Expand(
                 cas,

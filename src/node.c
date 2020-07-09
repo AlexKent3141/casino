@@ -80,16 +80,16 @@ void AddNode(
 }
 
 /* Check that all child nodes have at least one playout. */
-bool FullyExpanded(
-    struct CAS_Node* n)
+bool CAS_DefaultExpansionPolicy(
+    struct CAS_Node* parent)
 {
     struct CAS_NodeList* list;
     bool expanded = true;
     size_t i;
 
-    assert(n != NULL && n->children != NULL);
+    assert(parent != NULL && parent->children != NULL);
 
-    list = n->children;
+    list = parent->children;
 
     for (i = 0; i < list->numNodes && expanded; i++)
     {

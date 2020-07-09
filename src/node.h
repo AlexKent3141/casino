@@ -20,7 +20,4 @@ void AddNode(
     int nextActionStage,
     CAS_Action action);
 
-bool FullyExpanded(
-    struct CAS_Node* n);
-
 #endif /* __CASINO_NODE_INCLUDED_H__ */

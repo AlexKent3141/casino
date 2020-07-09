@@ -150,6 +150,13 @@ struct CAS_SearchConfig
     void (*PrioritiseExpandedNodesPolicy)(
         CAS_DomainState domainState,
         struct CAS_NodeList* nodes);
+
+    /*
+     * This criterion is used to determine whether a child of this parent node
+     * should be expanded.
+     */
+    bool (*ExpansionPolicy)(
+        struct CAS_Node* parent);
 };
 
 /*
@@ -224,6 +231,13 @@ EXPORT bool CAS_DefaultStopPlayoutCriterion(
 EXPORT void CAS_DefaultPrioritiseExpandedNodesPolicy(
     CAS_DomainState previousPosition,
     struct CAS_NodeList* childNodes);
+
+/*
+ * The default expansion policy just checks whether all children of the parent
+ * have at least one playout.
+ */
+EXPORT bool CAS_DefaultExpansionPolicy(
+    struct CAS_Node* parent);
 
 /*
  * The default selection policy for nodes during selection.
