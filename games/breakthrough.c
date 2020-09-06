@@ -3,6 +3,7 @@
 #include "stdint.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "assert.h"
 #include "math.h"
 
 /* Test Casino using 8x8 Breakthrough as an example. */
@@ -229,11 +230,12 @@ CAS_Action BiasedPlayoutPolicy(void* casState,
 }
 
 /* From here on these are the functions required by Casino. */
-void CopyState(CAS_DomainState st, char* buf)
+void CopyState(CAS_DomainState source, CAS_DomainState target)
 {
     struct BreakState* copy, *orig;
-    orig = (struct BreakState*)st;
-    copy = (struct BreakState*)buf;
+    orig = (struct BreakState*)source;
+    copy = (struct BreakState*)target;
+    assert(copy != NULL);
     copy->player = orig->player;
     copy->p1Pieces = orig->p1Pieces;
     copy->p2Pieces = orig->p2Pieces;
@@ -367,18 +369,27 @@ CAS_Action GetUserAction()
 void PlayGame(void* casState, struct CAS_SearchConfig* config)
 {
     struct BreakState* breakState;
+    struct BreakState** workerStates;
     struct CAS_ActionStats* stats;
     enum CAS_SearchResult res;
     CAS_Action userAction;
+    size_t i;
 
     breakState = MakeState();
+
+    workerStates = (struct BreakState**)malloc(
+        config->numThreads*sizeof(struct BreakState*));
+
+    for (i = 0; i < config->numThreads; i++)
+        workerStates[i] = MakeState();
+
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
 
     while (CheckForWinner(breakState) == CAS_NONE)
     {
         /* Do the computer move. */
         printf("Starting search.\n");
-        res = CAS_Search(casState, config, breakState, CAS_P1, 5000);
+        res = CAS_Search(casState, config, breakState, (void**)workerStates, CAS_P1, 5000);
         if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
@@ -410,6 +421,11 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
     free(stats);
     free(breakState);
+
+    for (i = 0; i < config->numThreads; i++)
+        free(workerStates[i]);
+
+    free(workerStates);
 }
 
 int main()
@@ -424,7 +440,6 @@ int main()
     /* Initialise the problem domain. */
     domain.maxActionsPerTurn = MaxActionsPerTurn;
     domain.actionStages = 1;
-    domain.domainStateSize = sizeof(struct BreakState);
     domain.CopyState = &CopyState;
     domain.GetStateActions = &GetStateActions;
     domain.DoAction = &DoAction;
@@ -434,6 +449,8 @@ int main()
     config.numThreads = 4;
     config.SelectionPolicy = &BiasedSelectionPolicy;
     config.PlayoutPolicy = &BiasedPlayoutPolicy;
+    config.ExpansionPolicy = &CAS_DefaultExpansionPolicy;
+    config.StopPlayout = &CAS_DefaultStopPlayoutCriterion;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);
