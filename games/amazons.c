@@ -415,12 +415,14 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     struct CAS_ActionStats* stats;
     enum CAS_SearchResult res;
     CAS_Action* pv = (CAS_Action*)malloc(NUM_STAGES*sizeof(CAS_Action));
-    int i;
+    size_t i;
 
     amazonsState = MakeState();
 
-    workerStates = (struct AmazonsState**)malloc(4*sizeof(struct AmazonsState*));
-    for (i = 0; i < 4; i++)
+    workerStates = (struct AmazonsState**)malloc(
+        config->numThreads*sizeof(struct AmazonsState*));
+
+    for (i = 0; i < config->numThreads; i++)
         workerStates[i] = MakeState();
 
     stats = (struct CAS_ActionStats*)malloc(sizeof(struct CAS_ActionStats));
@@ -474,7 +476,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
     free(stats);
     free(amazonsState);
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < config->numThreads; i++)
         free(workerStates[i]);
 
     free(workerStates);
@@ -501,7 +503,10 @@ int main()
     config.numThreads = 4;
     config.SelectionPolicy = &CAS_DefaultSelectionPolicy;
     config.PlayoutPolicy = &CAS_DefaultPlayoutPolicy;
+    config.ExpansionPolicy = &CAS_DefaultExpansionPolicy;
     config.StopPlayout = &CAS_DefaultStopPlayoutCriterion;
+    config.PrioritiseExpandedNodesPolicy =
+        &CAS_DefaultPrioritiseExpandedNodesPolicy;
 
     /* Initialise Casino. */
     buf = (char*)malloc(MaxBytes);
