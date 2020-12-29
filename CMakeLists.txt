@@ -18,5 +18,5 @@ if (MSVC)
   # TODO
 else()
   add_compile_options(
-    -Wall -Wpedantic -Werror -ansi -O3)
+    -Wall -Wextra -Wpedantic -ansi -O3)
 endif()

@@ -10,6 +10,10 @@ add_library(casino
     random.c
     selection.c)
 
+set_target_properties(casino
+  PROPERTIES
+    C_VISIBILITY_PRESET hidden)
+
 if (MSVC)
   # TODO
 else()
