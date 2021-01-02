@@ -13,7 +13,7 @@ struct MemoryState* MemoryInit(
 
     mem = (struct MemoryState*)&buf[0];
 
-    pthread_mutex_init(&mem->mutex, NULL);
+    rmk_mutex_create(&mem->mutex);
 
     mem->buf = buf;
     mem->bufSize = bufSize;
@@ -45,11 +45,11 @@ char* GetMemory(
 {
     char* buf;
 
-    pthread_mutex_lock(&st->mutex);
+    rmk_mutex_lock(&st->mutex);
 
     if (!IsMemoryAvailable(st, numBytes))
     {
-        pthread_mutex_unlock(&st->mutex);
+        rmk_mutex_unlock(&st->mutex);
         return NULL;
     }
 
@@ -58,7 +58,7 @@ char* GetMemory(
     memset(buf, 0, numBytes);
     st->bufNext += numBytes;
 
-    pthread_mutex_unlock(&st->mutex);
+    rmk_mutex_unlock(&st->mutex);
 
     return buf;
 }

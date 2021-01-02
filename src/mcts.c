@@ -153,7 +153,7 @@ void* SearchWorker(void* threadData)
             data->initialPosition,
             data->workerPosition);
 
-        pthread_mutex_lock(data->treeLock);
+        rmk_mutex_lock(data->treeLock);
 
         selected = Select(
             cas,
@@ -179,7 +179,7 @@ void* SearchWorker(void* threadData)
             n = selected;
         }
 
-        pthread_mutex_unlock(data->treeLock);
+        rmk_mutex_unlock(data->treeLock);
 
         if (n == NULL)
         {
@@ -194,15 +194,13 @@ void* SearchWorker(void* threadData)
             data->workerPosition,
             data->actionList);
 
-        pthread_mutex_lock(data->treeLock);
+        rmk_mutex_lock(data->treeLock);
 
         Backprop(n, winner);
 
-        pthread_mutex_unlock(data->treeLock);
+        rmk_mutex_unlock(data->treeLock);
 
-        pthread_testcancel();
-
-    } while (true);
+    } while (!rmk_thread_stop_requested());
 
     return NULL;
 }

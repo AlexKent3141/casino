@@ -4,6 +4,7 @@
 #include "../include/casino.h"
 #include "casino_state.h"
 #include "node.h"
+#include "ropemaker.h"
 
 /* Keep selecting child nodes until a leaf node (or a terminal node) is reached. */
 struct CAS_Node* Select(
@@ -44,7 +45,7 @@ struct WorkerData
     struct CAS_ActionList* actionList;
     CAS_DomainState workerPosition;
     PRNGState* prngState;
-    pthread_mutex_t* treeLock;
+    rmk_mutex_t* treeLock;
 };
 
 /* This function is executed by a worker thread. */

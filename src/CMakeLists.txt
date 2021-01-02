@@ -1,4 +1,15 @@
 
+include(FetchContent)
+
+FetchContent_Declare(
+  ropemaker
+  GIT_REPOSITORY https://github.com/AlexKent3141/ropemaker.git
+  GIT_TAG v0.1)
+
+FetchContent_MakeAvailable(ropemaker)
+
+include_directories(${ropemaker_SOURCE_DIR}/include)
+
 add_library(casino
   SHARED
     actions.c
@@ -19,6 +30,6 @@ if (MSVC)
 else()
   target_link_libraries(casino
     PRIVATE
-      pthread
+      ropemaker
       m)
 endif()

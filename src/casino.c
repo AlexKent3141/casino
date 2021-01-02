@@ -4,8 +4,7 @@
 #include "casino_state.h"
 #include "mcts.h"
 #include "memory.h"
-#include "errno.h"
-#include "time.h"
+#include "ropemaker.h"
 
 void* CAS_Init(
     struct CAS_Domain* domain,
@@ -90,15 +89,6 @@ int CAS_GetPV(
     return i;
 }
 
-void SleepInMs(int ms)
-{
-    struct timespec ts;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = ms % 1000 * 1000000;
-
-    while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
-}
-
 enum CAS_SearchResult CAS_Search(
     void* state,
     struct CAS_SearchConfig* config,
@@ -110,8 +100,8 @@ enum CAS_SearchResult CAS_Search(
     struct CAS_State* cas;
     struct WorkerData* data;
     PRNGState* prngStates;
-    pthread_t* tids;
-    pthread_mutex_t treeLock;
+    rmk_thread_t* tids;
+    rmk_mutex_t treeLock;
     size_t i;
 
     PRNGState prngInitial =
@@ -129,7 +119,7 @@ enum CAS_SearchResult CAS_Search(
     ResetTree(cas->mem);
 
     /* Initialise a mutex to protect access to the tree. */
-    if (pthread_mutex_init(&treeLock, NULL) != 0)
+    if (!rmk_mutex_create(&treeLock))
         return CAS_COULD_NOT_INITIALISE_MUTEX;
 
     /* Initialise the root node. */
@@ -139,9 +129,9 @@ enum CAS_SearchResult CAS_Search(
         return CAS_INSUFFICIENT_MEMORY;
 
     /* Initialise and kick off each of the worker threads. */
-    tids = (pthread_t*)GetMemory(
+    tids = (rmk_thread_t*)GetMemory(
         cas->mem,
-        config->numThreads*sizeof(pthread_t));
+        config->numThreads*sizeof(rmk_thread_t));
 
     if (tids == NULL)
         return CAS_INSUFFICIENT_MEMORY;
@@ -177,19 +167,19 @@ enum CAS_SearchResult CAS_Search(
         data->workerPosition = workerPositions[i];
         data->prngState = &prngStates[i];
 
-        pthread_create(&tids[i], NULL, &SearchWorker, data);
+        rmk_thread_create(&tids[i], RMK_JOINABLE, &SearchWorker, data);
     }
 
-    SleepInMs(duration);
+    rmk_sleep_ms(duration);
 
     /* Wait for all threads to terminate. */
     for (i = 0; i < config->numThreads; i++)
     {
-        pthread_cancel(tids[i]);
-        pthread_join(tids[i], NULL);
+        rmk_thread_request_stop(tids[i]);
+        rmk_thread_join(tids[i]);
     }
 
-    pthread_mutex_destroy(&treeLock);
+    rmk_mutex_destroy(&treeLock);
 
     return CAS_SUCCESS;
 }
