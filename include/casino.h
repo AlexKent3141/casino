@@ -12,7 +12,13 @@
 #include "stdint.h"
 #include "stdlib.h"
 
+#ifdef _MSC_VER
+#define EXPORT __declspec(dllexport)
+#elif __GNUC__
 #define EXPORT __attribute__ ((visibility("default")))
+#else
+#error "Compiler not supported"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

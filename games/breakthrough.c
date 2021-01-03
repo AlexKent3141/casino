@@ -6,6 +6,10 @@
 #include "assert.h"
 #include "math.h"
 
+#ifdef _MSC_VER
+#include "intrin.h"
+#endif
+
 /* Test Casino using 8x8 Breakthrough as an example. */
 
 /*
@@ -86,7 +90,13 @@ int GetEnd(CAS_Action action)
 
 int PopLSB(bb* bits)
 {
-    int bit = __builtin_ffsll(*bits)-1;
+    int bit;
+#ifdef _MSC_VER
+    _BitScanForward(&bit, *bits);
+    bit -= 1;
+#else
+    bit = __builtin_ffsll(*bits) - 1;
+#endif
     *bits &= *bits - 1;
     return bit;
 }
@@ -337,6 +347,7 @@ void PrintState(struct BreakState* state)
     }
 
     printf("   A B C D E F G H\n");
+    fflush(stdout);
 }
 
 void PrintAction(CAS_Action action)

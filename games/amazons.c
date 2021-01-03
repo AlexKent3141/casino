@@ -128,6 +128,7 @@ void PrintState(struct AmazonsState* state)
     }
 
     PrintLetters();
+    fflush(stdout);
 }
 
 /* Helper functions. */

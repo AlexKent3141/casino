@@ -26,7 +26,9 @@ set_target_properties(casino
     C_VISIBILITY_PRESET hidden)
 
 if (MSVC)
-  # TODO
+  target_link_libraries(casino
+    PRIVATE
+      ropemaker)
 else()
   target_link_libraries(casino
     PRIVATE

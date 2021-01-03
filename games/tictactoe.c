@@ -126,6 +126,8 @@ void PrintState(struct TTTState* state)
            GetPieceChar(state->pieces[6]),
            GetPieceChar(state->pieces[7]),
            GetPieceChar(state->pieces[8]));
+
+    fflush(stdout);
 }
 
 CAS_Action GetUserAction()
@@ -182,7 +184,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
 
         CAS_GetBestAction(casState, stats);
         printf("Action stats:\n"
-               "Best move: %ld\n"
+               "Best move: %lld\n"
                "Win rate: %f\n"
                "Playouts: %d\n",
                stats->action, stats->winRate, stats->playouts);
