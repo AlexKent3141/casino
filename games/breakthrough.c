@@ -92,8 +92,7 @@ int PopLSB(bb* bits)
 {
     int bit;
 #ifdef _MSC_VER
-    _BitScanForward(&bit, *bits);
-    bit -= 1;
+    _BitScanForward64(&bit, *bits);
 #else
     bit = __builtin_ffsll(*bits) - 1;
 #endif
@@ -306,7 +305,7 @@ void DoAction(CAS_DomainState st, CAS_Action action)
 {
     struct BreakState* board = (struct BreakState*)st;
     int start = GetStart(action), end = GetEnd(action);
-    
+
     if (board->player == CAS_P1)
     {
         board->p1Pieces ^= (squares[start] | squares[end]);
@@ -401,6 +400,7 @@ void PlayGame(void* casState, struct CAS_SearchConfig* config)
         /* Do the computer move. */
         printf("Starting search.\n");
         res = CAS_Search(casState, config, breakState, (void**)workerStates, CAS_P1, 5000);
+
         if (res != CAS_SUCCESS)
         {
             printf("Search failed: %d\n", res);
