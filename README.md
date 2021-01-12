@@ -7,7 +7,7 @@ The MCTS algorithm has been shown to be very effective in some areas where other
 My MCTS implementation in OnePunchGo is very much Go-specific. This library is an attempt to make something more reusable.
 
 ## Features
-* Fast single-threaded MCTS implementation with UCB-based exploration/exploitation.
+* Fast multi-threaded MCTS implementation with UCB-based exploration/exploitation.
 * Ability to apply MCTS to a wide range of problems.
 * Customisable selection and playout policies.
 * Move groups (see Amazons example).
@@ -18,32 +18,24 @@ Add more MCTS extensions:
 * Different number of players (single player or even > 2 players).
 * Support for imperfect information games.
 
-Optimisations:
-* Multi-threading.
-
 ## Design
 The problem domain is specified by defining a `CAS_Domain` struct. This struct contains pointers to functions that implement the domain rules such as move generation and scoring.
 
-One unusual feature of Casino is that it does not perform any dynamic memory allocation. The application must allocate a single buffer of memory and pass this to Casino, which will use the memory as it sees fit. This makes Casino much easier to maintain - it is much more difficult to introduce memory leaks!
+Casino does not perform any dynamic memory allocation. The application must allocate a single buffer of memory and pass this to Casino, which will use the memory as it sees fit. This makes Casino much easier to maintain - it is much more difficult to introduce memory leaks!
 
-The search routine will keep running until it runs out of resources i.e. available memory or time.
+The search routine will keep running until it runs out of time. If it runs out of memory it will keep simulating its existing tree.
 
 ## Building
-Casino is written in C89 and only depends on the standard library so it should be completely portable. The library must be compiled using GCC (GCC exclusive extensions are used).
+Casino is written in C89 and only depends on the standard library so it should be completely portable. It is built using cmake and has been tested on Windows and Linux.
 
-I have done most of my testing on Linux but have confirmed that it is possible to compile Casino (and run the examples) in Windows under Cygwin.
+For example, from the root directory you can run the commands (on Linux):
 
-### Casino library
-The Casino library can be compiled by running `make` in the root directory. This will produce the libcasino.so shared library which can be linked against by applications.
+`mkdir build`
 
-All of the exported functions are defined in the casino.h header in the include folder.
+`cd build`
 
-### Unit tests
-The tests can be compiled by running `make test` in the root directory.
+`cmake ..`
 
-### Example games
-Tic-tac-toe: compiled by running `make tictactoe`
+`cmake --build . --config Release`
 
-Breakthrough: compiled by running `make break`
-
-Amazons: compiled by running `make amazons`
+This will build the Casino library and all of the games.
